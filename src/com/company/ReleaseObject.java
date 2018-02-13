@@ -239,7 +239,7 @@ class ReleaseObject
             return (depZNIPresentCount==1);
     }
 
-    
+
     // Заменить список ЗНИ в релизе
     void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
     {
