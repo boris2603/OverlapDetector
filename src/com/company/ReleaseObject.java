@@ -161,23 +161,24 @@ class ReleaseObject
     }
 
     // Список неразрешенных зависимостей по ЗНИ
-    ArrayList<OverlapItem> OverlapDetector(String ZNI, ArrayList<DepListItem> pZNIObjectList, ArrayList<String> DepZNIList)
+    ArrayList<OverlapItem> OverlapDetector(InstallFile CheckInstallFile)
+    // String ZNI, ArrayList<DepListItem> pZNIObjectList, ArrayList<String> DepZNIList)
     {
 
         // Список неразрешенных зависимостей по ЗНИ и объектам
         ArrayList<OverlapItem> ZNIIntersectionList= new ArrayList<>();
 
-        OverlapItem  ZNIIntersectionItem = new OverlapItem(ZNI);
+        OverlapItem  ZNIIntersectionItem = new OverlapItem(CheckInstallFile.sZNI);
         String CheckZNI="";
 
         // Получаем список всех зависимых объектов
-        ArrayList<DepListItem> IntersectionObjects = OverlapCandidatDetector(pZNIObjectList);
+        ArrayList<DepListItem> IntersectionObjects = OverlapCandidatDetector(CheckInstallFile.FullPCKItemsList);
 
         //Проверяем что объекты по ЗНИ учтены в списке работ
         for (DepListItem itemObject: IntersectionObjects)
         {
             // Проверяем что ЗНИ в объекте учтена в списке зависимых ЗНИ
-            if (!Objects.equals(ZNI, itemObject.ZNI)) {
+            if (!Objects.equals(CheckInstallFile.sZNI, itemObject.ZNI)) {
                 if (CheckInterseptZNI(itemObject.ZNI))
                 {
                   if (!Objects.equals(CheckZNI, itemObject.ZNI))
@@ -193,9 +194,9 @@ class ReleaseObject
         }
 
         // Проверим что ЗНИ от которых есть зависимость передавалось на стенд
-        if (!DepZNIList.isEmpty())
+        if (!CheckInstallFile.DepZNIList.isEmpty())
         {
-            for (String TestZNI : DepZNIList)
+            for (String TestZNI : CheckInstallFile.DepZNIList)
             {
                 if (!AlreadyInstallZNI(TestZNI))
                 {
@@ -238,60 +239,7 @@ class ReleaseObject
             return (depZNIPresentCount==1);
     }
 
-
-// --Commented out by Inspection START (13.02.2018, 16:27):
-//    // Получить зни по которым есть не разрешенные пересечения TODO отладить
-//    ArrayList<String> OverlapZNIDetector(ArrayList<DepListItem> OverlapItems)
-//    {
-//        ArrayList<String> DependZNIList=new ArrayList<String>();
-//        String DependZNI="";
-//
-//        for (DepListItem item : OverlapItems)
-//        {
-//            int depZNIPresentCount=0;
-//
-//            if (DependZNI!=item.ZNI) {
-//                for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
-//                {
-//                    if (depZNI.CheckZNI(item.ZNI))
-//                    {
-//                        depZNIPresentCount++;
-//                    }
-//                }
-//                if (depZNIPresentCount==1) {
-//                    DependZNIList.add(item.ZNI);
-//                }
-//                DependZNI=item.ZNI;
-//            }
-//
-//        }
-//        return DependZNIList;
-//    }
-// --Commented out by Inspection STOP (13.02.2018, 16:27)
-
-
-// --Commented out by Inspection START (13.02.2018, 16:27):
-//    // Список ЗНИ и объектов по которым, есть неразрешенные пересечения
-//    ArrayList<DepListItem> OverlapObjectDetector(ArrayList<String> DependZNIList, ArrayList<DepListItem> OverlapItems)
-//    {
-//        ArrayList<DepListItem> DependItems=new ArrayList<DepListItem>();
-//
-//        // Проверить что ЗНИ есть в списке завсимых
-//        for(String ZNI : DependZNIList)
-//        {
-//            // Если найдено удалить записи о зависимостях
-//            for(DepListItem Item : OverlapItems)
-//            {
-//                if (Item.ZNI==ZNI && !CheckInterseptZNI(Item.ZNI)) {
-//                    DependItems.add(Item);
-//                }
-//            }
-//        }
-//        // Если нет оставить записи о зависимостях
-//        return DependItems;
-//    }
-// --Commented out by Inspection STOP (13.02.2018, 16:27)
-
+    
     // Заменить список ЗНИ в релизе
     void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
     {

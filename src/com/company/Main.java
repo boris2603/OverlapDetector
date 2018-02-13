@@ -52,7 +52,7 @@ public class Main {
         }
         else
         {
-            ArrayList<OverlapItem> ZNIDepend=ReleaseObjectsFile.OverlapDetector(CheckInstFile.sZNI,CheckInstFile.FullPCKItemsList, CheckInstFile.DepZNIList);
+            ArrayList<OverlapItem> ZNIDepend=ReleaseObjectsFile.OverlapDetector(CheckInstFile);
             if (!ZNIDepend.isEmpty())
             {
                 System.out.println();

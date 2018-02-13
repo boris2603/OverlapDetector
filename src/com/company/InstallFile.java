@@ -11,11 +11,13 @@ import java.util.*;
 
 class InstallFile {
 
-    // публичные переменные
+    // результаты разбора
     public String sZNI ="";
+    public String Developer;
     public final ArrayList<DepListItem> FullPCKItemsList = new ArrayList<>();
     public final ArrayList<String> DepZNIList= new ArrayList<>();
     public final ArrayList<String> EmailList= new ArrayList<>();
+
 
     // Путь к файлам где лежит дистрибутив
     private final String InstallFileMasterPath;
@@ -40,6 +42,8 @@ class InstallFile {
     private final Pattern pDependZNI=Pattern.compile("[0-9]{6}");
     // Индикатор что есть Mdb
     private final Pattern pMDB =Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb");
+    // Разработчик
+    private final Pattern pDeveloper=Pattern.compile("Разработчик:\\s*\\w*");
 
 
     // Индикатор, что у нас есть ошибки парсинга файлов
@@ -55,7 +59,7 @@ class InstallFile {
 
     InstallFile(String InstallTxtFileName)
     {
-
+        Developer="";
         InstallFileMasterPath = Paths.get(InstallTxtFileName).getParent().toString();
         InstallFileParce(LoadFile(InstallTxtFileName));
         if (sZNI.isEmpty())
@@ -124,6 +128,17 @@ class InstallFile {
         return Result;
     }
 
+    // Получить подсктроку по маске с учетом корректировочных индексов
+    private String GetMatchParamByStart(String line, Pattern pPattern, @SuppressWarnings("SameParameterValue") int CorrectIndexLeft) {
+        String Result="";
+
+        Matcher m = pPattern.matcher(line);
+        if (m.find())  {
+            Result=line.substring(m.start()+ CorrectIndexLeft).trim();
+        }
+        return Result;
+    }
+
     // Распарсить строку Install
     private void InstallFileParce(List<String> lines) {
 
@@ -133,6 +148,11 @@ class InstallFile {
             if (sZNI.isEmpty())
             {
                 sZNI=GetMatchParam(line,pZNI,4,0);
+            }
+            // Получаем ФИО разработчика
+            if (Developer.isEmpty())
+            {
+                Developer=GetMatchParamByStart(line,pDeveloper,12);
             }
 
             // Создаем список PCK
