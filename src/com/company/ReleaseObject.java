@@ -7,17 +7,21 @@ import java.nio.file.*;
 import com.company.DepListItem;
 import com.company.DepZNIListItem;
 
-public class ReleaseObject
+class ReleaseObject
 {
     // Список всех объектов по ЗНИ
-    ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<DepListItem>();
+    @SuppressWarnings("WeakerAccess")
+    final
+    ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
 
     // Спосок всех ЗНИ и отмеченных зависимостей
-    ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<DepZNIListItem>();
+    @SuppressWarnings("WeakerAccess")
+    final
+    ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
 
-    String FileObjectName = "ODObjectList.txt";
-    String FileZNIName = "ODZNIList.txt";
-    String FileNamePath = "";
+    private final String FileObjectName = "ODObjectList.txt";
+    private final String FileZNIName = "ODZNIList.txt";
+    private final String FileNamePath;
 
     ReleaseObject(String ODFileNamePath)
     {
@@ -26,9 +30,10 @@ public class ReleaseObject
 
 
     // Загрузить список ЗНИ по релизу
+    @SuppressWarnings("ManualArrayToCollectionCopy")
     void LoadZNIList()
     {
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
 
         if (Files.exists(Paths.get(FileNamePath,FileZNIName))) {
             try {
@@ -59,7 +64,7 @@ public class ReleaseObject
     // Загрузить список объектов и зависимых ЗНИ по релизу
     void LoadItemList()
     {
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
 
         if (Files.exists(Paths.get(FileNamePath,FileObjectName))) {
             try {
@@ -89,20 +94,20 @@ public class ReleaseObject
     // Выгрузить список ЗНИ по релизу
     void SaveZNIList()
     {
-        ArrayList<String> ObjectList=new ArrayList<String>();
+        ArrayList<String> ObjectList= new ArrayList<>();
 
 
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
-            String saveString =item.ZNI;
+            StringBuilder saveString = new StringBuilder(item.ZNI);
             for (String itmZNI : item.DependenceList)
             {
                 if (!itmZNI.isEmpty()) {
-                    saveString = saveString + " " + itmZNI;
+                    saveString.append(" ").append(itmZNI);
                 }
             }
             // saveString=item.ZNI+" "+saveString;
-            ObjectList.add(saveString);
+            ObjectList.add(saveString.toString());
         }
 
         try
@@ -117,15 +122,17 @@ public class ReleaseObject
             System.out.println("IO Error writing Objects File "+FileZNIName);
             System.out.println(e.getLocalizedMessage());
             System.out.println(e.getMessage());
+            //noinspection ThrowablePrintedToSystemOut
             System.out.println(e.fillInStackTrace());
         }
 
     }
 
     // Выгрузить список объектов и зависимых ЗНИ по релизу
+    @SuppressWarnings("ThrowablePrintedToSystemOut")
     void SaveItemList()
     {
-        ArrayList<String> ObjectList=new ArrayList<String>();
+        ArrayList<String> ObjectList= new ArrayList<>();
 
 
         for(DepListItem item : ReleaseFullItemsList)
@@ -158,7 +165,7 @@ public class ReleaseObject
     {
 
         // Список неразрешенных зависимостей по ЗНИ и объектам
-        ArrayList<OverlapItem> ZNIIntersectionList=new ArrayList<OverlapItem>();
+        ArrayList<OverlapItem> ZNIIntersectionList= new ArrayList<>();
 
         OverlapItem  ZNIIntersectionItem = new OverlapItem(ZNI);
         String CheckZNI="";
@@ -170,10 +177,10 @@ public class ReleaseObject
         for (DepListItem itemObject: IntersectionObjects)
         {
             // Проверяем что ЗНИ в объекте учтена в списке зависимых ЗНИ
-            if (ZNI!=itemObject.ZNI) {
+            if (!Objects.equals(ZNI, itemObject.ZNI)) {
                 if (CheckInterseptZNI(itemObject.ZNI))
                 {
-                  if (CheckZNI!=itemObject.ZNI)
+                  if (!Objects.equals(CheckZNI, itemObject.ZNI))
                   {
                       ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
                   }
@@ -204,7 +211,7 @@ public class ReleaseObject
     }
 
     // Проверим что ЗНИ устанавливалось на стенд
-    boolean AlreadyInstallZNI(String CheckZNI)
+    private boolean AlreadyInstallZNI(String CheckZNI)
     {
         boolean retval=false;
         for (DepZNIListItem itemZNI : ReleaseFullDepZNIList) {
@@ -219,67 +226,71 @@ public class ReleaseObject
     }
 
     // Проверим что по ЗНИ не учтены звиссимости
-    boolean CheckInterseptZNI(String CheckZNI){
+    private boolean CheckInterseptZNI(String CheckZNI){
 
         int depZNIPresentCount=0;
         for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
             {
                 if (depZNI.CheckZNI(CheckZNI)) {
                     depZNIPresentCount++;
-                };
+                }
             }
             return (depZNIPresentCount==1);
-    };
-
-
-    // Получить зни по которым есть не разрешенные пересечения TODO отладить
-    ArrayList<String> OverlapZNIDetector(ArrayList<DepListItem> OverlapItems)
-    {
-        ArrayList<String> DependZNIList=new ArrayList<String>();
-        String DependZNI="";
-
-        for (DepListItem item : OverlapItems)
-        {
-            int depZNIPresentCount=0;
-
-            if (DependZNI!=item.ZNI) {
-                for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
-                {
-                    if (depZNI.CheckZNI(item.ZNI))
-                    {
-                        depZNIPresentCount++;
-                    }
-                }
-                if (depZNIPresentCount==1) {
-                    DependZNIList.add(item.ZNI);
-                }
-                DependZNI=item.ZNI;
-            }
-
-        }
-        return DependZNIList;
     }
 
 
-    // Список ЗНИ и объектов по которым, есть неразрешенные пересечения
-    ArrayList<DepListItem> OverlapObjectDetector(ArrayList<String> DependZNIList, ArrayList<DepListItem> OverlapItems)
-    {
-        ArrayList<DepListItem> DependItems=new ArrayList<DepListItem>();
+// --Commented out by Inspection START (13.02.2018, 16:27):
+//    // Получить зни по которым есть не разрешенные пересечения TODO отладить
+//    ArrayList<String> OverlapZNIDetector(ArrayList<DepListItem> OverlapItems)
+//    {
+//        ArrayList<String> DependZNIList=new ArrayList<String>();
+//        String DependZNI="";
+//
+//        for (DepListItem item : OverlapItems)
+//        {
+//            int depZNIPresentCount=0;
+//
+//            if (DependZNI!=item.ZNI) {
+//                for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
+//                {
+//                    if (depZNI.CheckZNI(item.ZNI))
+//                    {
+//                        depZNIPresentCount++;
+//                    }
+//                }
+//                if (depZNIPresentCount==1) {
+//                    DependZNIList.add(item.ZNI);
+//                }
+//                DependZNI=item.ZNI;
+//            }
+//
+//        }
+//        return DependZNIList;
+//    }
+// --Commented out by Inspection STOP (13.02.2018, 16:27)
 
-        // Проверить что ЗНИ есть в списке завсимых
-        for(String ZNI : DependZNIList)
-        {
-            // Если найдено удалить записи о зависимостях
-            for(DepListItem Item : OverlapItems)
-            {
-                if (Item.ZNI==ZNI && !CheckInterseptZNI(Item.ZNI)) {
-                    DependItems.add(Item);
-                }
-            }
-        }
-        // Если нет оставить записи о зависимостях
-        return DependItems;
-    }
+
+// --Commented out by Inspection START (13.02.2018, 16:27):
+//    // Список ЗНИ и объектов по которым, есть неразрешенные пересечения
+//    ArrayList<DepListItem> OverlapObjectDetector(ArrayList<String> DependZNIList, ArrayList<DepListItem> OverlapItems)
+//    {
+//        ArrayList<DepListItem> DependItems=new ArrayList<DepListItem>();
+//
+//        // Проверить что ЗНИ есть в списке завсимых
+//        for(String ZNI : DependZNIList)
+//        {
+//            // Если найдено удалить записи о зависимостях
+//            for(DepListItem Item : OverlapItems)
+//            {
+//                if (Item.ZNI==ZNI && !CheckInterseptZNI(Item.ZNI)) {
+//                    DependItems.add(Item);
+//                }
+//            }
+//        }
+//        // Если нет оставить записи о зависимостях
+//        return DependItems;
+//    }
+// --Commented out by Inspection STOP (13.02.2018, 16:27)
 
     // Заменить список ЗНИ в релизе
     void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
@@ -307,7 +318,7 @@ public class ReleaseObject
     // Заменить список объектов по ЗНИ в обзщем релизе
     void ChangeReleaseItemList(String ZNI, ArrayList<DepListItem> pZNIObjectList)
     {
-        ArrayList<DepListItem> RemoveFullItemsList = new ArrayList<DepListItem>();
+        ArrayList<DepListItem> RemoveFullItemsList = new ArrayList<>();
         //Удалить все записи по ЗНИ
         for (DepListItem Item : ReleaseFullItemsList) {
             if (Item.ZNI.equals(ZNI))
@@ -321,9 +332,9 @@ public class ReleaseObject
     }
 
     // Определить список объектов по которым есть пересечения
-    ArrayList<DepListItem> OverlapCandidatDetector(ArrayList<DepListItem> pZNIObjectList)
+    private ArrayList<DepListItem> OverlapCandidatDetector(ArrayList<DepListItem> pZNIObjectList)
     {
-        ArrayList<DepListItem> OverlapItems = new ArrayList<DepListItem>();
+        ArrayList<DepListItem> OverlapItems = new ArrayList<>();
         for(DepListItem Item:pZNIObjectList)
         {
             ArrayList<DepListItem> itemCandidate = FindObjects(Item);
@@ -333,9 +344,9 @@ public class ReleaseObject
     }
 
     // Определить есть-ли объект не по этому ЗНИ в релизе ранее
-    ArrayList<DepListItem> FindObjects(DepListItem checkItem)
+    private ArrayList<DepListItem> FindObjects(DepListItem checkItem)
     {
-        ArrayList<DepListItem> OverlapItems = new ArrayList<DepListItem>();
+        ArrayList<DepListItem> OverlapItems = new ArrayList<>();
 
         for(DepListItem Item:ReleaseFullItemsList)
         {

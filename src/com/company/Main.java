@@ -1,23 +1,19 @@
 package com.company;
 
-import java.io.IOException;
-import java.nio.file.*;
-import java.io.File;
-import java.nio.charset.*;
-import java.util.regex.*;
 import java.util.*;
 import com.company.DepListItem;
-import com.company.DepZNIListItem;
 import com.company.InstallFile;
 
 
 // Detector of not allowed dependencies
+@SuppressWarnings("WeakerAccess")
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    @SuppressWarnings("LoopStatementThatDoesntLoop")
+    public static void main(String[] args) {
         if (args.length < 2)  {
             System.out.println("Usage java OverlapDetector.jar install.txt_file_path storage_files_path -s");
-            System.out.println(" -s sorage update only, no intersection detector ");
+            System.out.println(" -s storage update only, no intersection detector ");
             return;
         }
         String FILE_NAME=args[0];
@@ -25,7 +21,7 @@ public class Main {
         boolean OnlyStorage=false;
         if (args.length==3) {
             OnlyStorage=args[2].equals("-s");
-        };
+        }
 
         ReleaseObject ReleaseObjectsFile=new ReleaseObject(STORAGE_PATH);
         ReleaseObjectsFile.LoadItemList();
@@ -57,7 +53,8 @@ public class Main {
         else
         {
             ArrayList<OverlapItem> ZNIDepend=ReleaseObjectsFile.OverlapDetector(CheckInstFile.sZNI,CheckInstFile.FullPCKItemsList, CheckInstFile.DepZNIList);
-            if (!ZNIDepend.isEmpty()) {
+            if (!ZNIDepend.isEmpty())
+            {
                 System.out.println();
                 System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + ":");
                 for (OverlapItem item : ZNIDepend) {
@@ -72,9 +69,9 @@ public class Main {
 
                     }
                     System.out.println();
-                    // Установить ERRORLEVEL как ошибка
-                    System.exit(-1);
                 }
+                // Установить ERRORLEVEL как ошибка
+                System.exit(-1);
             }
             else
             {

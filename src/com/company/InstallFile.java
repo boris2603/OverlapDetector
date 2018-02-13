@@ -5,43 +5,41 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.regex.*;
 import java.util.*;
 
-public class InstallFile {
+
+class InstallFile {
 
     // публичные переменные
     public String sZNI ="";
-    public ArrayList<DepListItem> FullPCKItemsList = new ArrayList<DepListItem>();
-    public ArrayList<String> DepZNIList=new ArrayList<String>();
-    public ArrayList<String> EmailList=new ArrayList<String>();
+    public final ArrayList<DepListItem> FullPCKItemsList = new ArrayList<>();
+    public final ArrayList<String> DepZNIList= new ArrayList<>();
+    public final ArrayList<String> EmailList= new ArrayList<>();
 
-    // Имена файлов и пути
-    private String InstallFileName;
-    private String InstallFileMasterPath;
-
+    // Путь к файлам где лежит дистрибутив
+    private final String InstallFileMasterPath;
 
     // Список ошибок
     private String HasErrorString = "";
 
     // Список PCK файлов
-    private ArrayList<String> pckList=new ArrayList<String>();
+    private final ArrayList<String> pckList= new ArrayList<>();
     // Список MDB файлов
-    private ArrayList<String> mdbList=new ArrayList<String>();
+    private final ArrayList<String> mdbList= new ArrayList<>();
 
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
-    private Pattern pZNI =Pattern.compile("ЗНИ\\s*[0-9]{6}");
-    private Pattern pEMail=Pattern.compile("<[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})>");
+    private final Pattern pZNI =Pattern.compile("ЗНИ\\s*[0-9]{6}");
+    private final Pattern pEMail=Pattern.compile("<[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})>");
     // PCK файлы для установки
-    private Pattern pPCKListIndicator=Pattern.compile("\\.*Установить\\.*");
-    private Pattern pPCK =Pattern.compile("([\\w-]+\\\\)*\\w*\\.pck");
+    private final Pattern pPCKListIndicator=Pattern.compile("\\.*Установить\\.*");
+    private final Pattern pPCK =Pattern.compile("([\\w-]+\\\\)*\\w*\\.pck");
     // Список ЗНИ зависимостей
-    private Pattern pDepListIndicator=Pattern.compile("\\.*Установка\\s*после\\.*");
-    private Pattern pDependZNI=Pattern.compile("[0-9]{6}");
+    private final Pattern pDepListIndicator=Pattern.compile("\\.*Установка\\s*после\\.*");
+    private final Pattern pDependZNI=Pattern.compile("[0-9]{6}");
     // Индикатор что есть Mdb
-    private Pattern pMDB =Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb");
+    private final Pattern pMDB =Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb");
 
 
     // Индикатор, что у нас есть ошибки парсинга файлов
@@ -57,9 +55,9 @@ public class InstallFile {
 
     InstallFile(String InstallTxtFileName)
     {
-        InstallFileName=InstallTxtFileName;
-        InstallFileMasterPath = Paths.get(InstallFileName).getParent().toString();
-        InstallFileParce(LoadFile(InstallFileName));
+
+        InstallFileMasterPath = Paths.get(InstallTxtFileName).getParent().toString();
+        InstallFileParce(LoadFile(InstallTxtFileName));
         if (sZNI.isEmpty())
         {
             HasErrorString=HasErrorString+"Invalid install.txt format: unresolve ЗНИ parametr"+System.lineSeparator();
@@ -77,7 +75,7 @@ public class InstallFile {
     // Загрузить файл с диска с обработкой ошибок
     private List<String> LoadFile(String FileName)
     {
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
 
         try {
             lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
@@ -94,7 +92,7 @@ public class InstallFile {
     // Получить список подстрок по pPattern c учетом сдвига CorrectIndex
     private ArrayList<String> GetMatchList(String line,Pattern pPattern,int CorrectIndex)
     {
-        ArrayList<String> ResultList = new ArrayList<String>();
+        ArrayList<String> ResultList = new ArrayList<>();
 
         Matcher m = pPattern.matcher(line);
         while (m.find()) {
@@ -104,32 +102,30 @@ public class InstallFile {
     }
 
     // Получить маасив подстрок по pPattern c учетом сдвига CorrectIndex, если найден pPatternIndicator
-    private ArrayList<String> GetMatchListByIndicator(String line,Pattern pPattern,Pattern pPatternIndicator,int CorrectIndex)
+    private ArrayList<String> GetMatchListByIndicator(String line, Pattern pPattern, Pattern pPatternIndicator)
     {
-        ArrayList<String> ResultList = new ArrayList<String>();
+        ArrayList<String> ResultList = new ArrayList<>();
 
         Matcher m = pPatternIndicator.matcher(line);
         if (m.find()) {
-            ResultList = GetMatchList(line,pPattern,CorrectIndex);
+            ResultList = GetMatchList(line,pPattern, 0);
         }
         return ResultList;
     }
 
     // Получить подсктроку по маске с учетом корректировочных индексов
-    private String GetMatchParam(String line, Pattern pPattern, int CorrectLeftIndex, int CorrectRightIndex) {
+    private String GetMatchParam(String line, Pattern pPattern, @SuppressWarnings("SameParameterValue") int CorrectIndexLeft, @SuppressWarnings("SameParameterValue") int CorrectIndexRight) {
         String Result="";
 
         Matcher m = pPattern.matcher(line);
         if (m.find())  {
-            Result=line.substring(m.start()+CorrectLeftIndex, m.end()+CorrectRightIndex).trim();
+            Result=line.substring(m.start()+ CorrectIndexLeft, m.end()+CorrectIndexRight).trim();
         }
         return Result;
     }
 
     // Распарсить строку Install
     private void InstallFileParce(List<String> lines) {
-
-        boolean isComment=false;
 
         for(String line: lines){
             
@@ -140,11 +136,11 @@ public class InstallFile {
             }
 
             // Создаем список PCK
-            pckList.addAll(GetMatchListByIndicator(line,pPCK,pPCKListIndicator,0));
+            pckList.addAll(GetMatchListByIndicator(line,pPCK,pPCKListIndicator));
             mdbList.addAll(GetMatchList(line,pMDB,0));
 
             //Обрабатываем Установить после
-            DepZNIList.addAll(GetMatchListByIndicator(line,pDependZNI,pDepListIndicator,0));
+            DepZNIList.addAll(GetMatchListByIndicator(line,pDependZNI,pDepListIndicator));
 
             //Получаем список почты
             EmailList.addAll(GetMatchList(line,pEMail,1));
@@ -153,9 +149,9 @@ public class InstallFile {
     }
 
     // Распарсить найденный PCK
-    public ArrayList<DepListItem> LoadPCKFile(String ZNI, String pckFileName)
+    private ArrayList<DepListItem> LoadPCKFile(String ZNI, String pckFileName)
     {
-        ArrayList<DepListItem> DepList = new ArrayList<DepListItem>();
+        ArrayList<DepListItem> DepList = new ArrayList<>();
         List<String> PCKlines = LoadFile(pckFileName);
 
         for (String line : PCKlines) {
@@ -183,6 +179,7 @@ public class InstallFile {
     }
 
     // Проверить что объект есть в списке объектов ЗНИ
+    @SuppressWarnings("WeakerAccess")
     boolean ObjectAlreadyInList(DepListItem checkItem)
     {
         boolean retVal=false;
@@ -194,14 +191,14 @@ public class InstallFile {
                 {
                     retVal=true;
                     break;
-                };
+                }
             }
         }
         return retVal;
     }
 
     // Загрузить список из всех PCK файлов
-    public void LoadDeployObjects(List<String> pckFileList)
+    private void LoadDeployObjects(List<String> pckFileList)
     {
         for (String pckFile: pckFileList) {
         File file = new File(InstallFileMasterPath, pckFile.replace('\\',File.separatorChar));

@@ -2,14 +2,14 @@ package com.company;
 
 import java.util.ArrayList;
 
-public class DepZNIListItem {
-    String ZNI;
+class DepZNIListItem {
+    final String ZNI;
     ArrayList<String> DependenceList;
 
     DepZNIListItem(String sZNI)
     {
         ZNI=sZNI;
-        DependenceList=new ArrayList<String>();
+        DependenceList= new ArrayList<>();
     }
 
     // Проверим что ЗНИ есть в списках
