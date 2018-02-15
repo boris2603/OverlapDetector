@@ -10,14 +10,10 @@ import com.company.DepZNIListItem;
 class ReleaseObject
 {
     // Список всех объектов по ЗНИ
-    @SuppressWarnings("WeakerAccess")
-    final
-    ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
+    private final ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
 
     // Спосок всех ЗНИ и отмеченных зависимостей
-    @SuppressWarnings("WeakerAccess")
-    final
-    ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
+    private final ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
 
     private final String FileObjectName = "ODObjectList.txt";
     private final String FileZNIName = "ODZNIList.txt";
@@ -50,9 +46,12 @@ class ReleaseObject
             String[] items = line.split(" ");
             if (items.length>0) {
                 DepZNIListItem Item = new DepZNIListItem(items[0]);
+                if (items.length>1) {
 
-                for (int idx = 1; idx < items.length; idx++) {
-                    Item.DependenceList.add(items[idx]);
+                    Item.DependenceList.addAll(Arrays.asList(Arrays.copyOfRange(items,1,items.length-1)));
+                   // for (int idx = 1; idx < items.length; idx++) {
+                   //     Item.DependenceList.add(items[idx]);
+                   // }
                 }
 
                 ReleaseFullDepZNIList.add(Item);

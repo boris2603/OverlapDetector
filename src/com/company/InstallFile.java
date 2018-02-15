@@ -54,7 +54,7 @@ class InstallFile {
 
     // Вернуть список ошибок парсинга
     public String getHasErrorString() {
-        return HasErrorString;
+        return ("ERROR "+InstallFileMasterPath+System.lineSeparator()+HasErrorString);
     }
 
     InstallFile(String InstallTxtFileName)
