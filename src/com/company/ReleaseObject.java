@@ -44,8 +44,11 @@ class ReleaseObject
             String[] items = line.split(" ");
             if (items.length>0) {
                 DepZNIListItem Item = new DepZNIListItem(items[0]);
-                if (items.length>1)
-                    Item.DependenceList.addAll(Arrays.asList(Arrays.copyOfRange(items, 1, items.length - 1)));
+
+                for (int idx = 1; idx < items.length; idx++) {
+                    Item.DependenceList.add(items[idx]);
+                }
+
                 ReleaseFullDepZNIList.add(Item);
             }
         }
@@ -57,12 +60,10 @@ class ReleaseObject
     {
         ArrayList<String> retVal=new ArrayList<>();
 
-        for(String checkItem : CheckInstFile.DepZNIList)
-            for (DepZNIListItem item : ReleaseFullDepZNIList)
-                if (!item.DependenceList.isEmpty())
+        for (DepZNIListItem item : ReleaseFullDepZNIList)
+            if (!item.DependenceList.isEmpty())
                     for (String itemDepList : item.DependenceList)
-                        if (itemDepList.equals(checkItem))
-                            retVal.add(checkItem);
+                        if (itemDepList.equals(CheckInstFile.sZNI)) retVal.add(item.ZNI);
         return retVal;
     }
 
@@ -105,7 +106,11 @@ class ReleaseObject
         {
             StringBuilder saveString = new StringBuilder(item.ZNI);
             for (String itmZNI : item.DependenceList)
-                if (!itmZNI.isEmpty()) saveString.append(" ").append(itmZNI);
+            {
+                if (!itmZNI.isEmpty()) {
+                    saveString.append(" ").append(itmZNI);
+                }
+            }
             // saveString=item.ZNI+" "+saveString;
             ObjectList.add(saveString.toString());
         }
@@ -218,6 +223,7 @@ class ReleaseObject
     void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
     {
         DepZNIListItem RemoveItem=new DepZNIListItem("");
+
         for(DepZNIListItem item: ReleaseFullDepZNIList)
             if (item.ZNI.equals(AddZNI)) {
                 RemoveItem = item;
