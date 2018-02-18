@@ -39,7 +39,7 @@ public class Main {
             // Обновить объекты PCK
             ReleaseObjectsFile.ChangeReleaseItemList(CheckInstFile.sZNI, CheckInstFile.FullPCKItemsList);
             // Обновить список ЗНИ
-            ReleaseObjectsFile.ChangeReleaseZNIList(CheckInstFile.sZNI, CheckInstFile.DepZNIList);
+            ReleaseObjectsFile.ChangeReleaseZNIList(CheckInstFile);
 
             // Сохранить полный список ЗНИ
             ReleaseObjectsFile.SaveZNIList();
@@ -58,15 +58,14 @@ public class Main {
                 System.out.println();
                 System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + ":");
                 for (OverlapItem item : ZNIDepend) {
-                    System.out.print(item.mainZNI + " ");
+                    System.out.print(item.mainZNI + " "+item.Developer);
                     if (item.depListItems.isEmpty()) {
                         System.out.print(" not installed");
                     } else {
+                        System.out.println();
                         for (DepListItem depListItem : item.depListItems) {
                             System.out.print(depListItem.Type + " " + depListItem.TBP + " " + depListItem.Object);
                         }
-
-
                     }
                     System.out.println();
                 }

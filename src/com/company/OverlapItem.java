@@ -7,7 +7,7 @@ import java.util.ArrayList;
 // Зависимости по конкретному ЗНИ
 class OverlapItem {
     final String mainZNI;
-    final String Developer;
+    String Developer;
     final ArrayList<DepListItem> depListItems;
     final ArrayList<String> EmailList;
 

@@ -41,11 +41,14 @@ class ReleaseObject
         ReleaseFullDepZNIList.clear();
 
         for(String line : lines) {
-            String[] items = line.split(" ");
+            String[] items = line.split(",");
             if (items.length>0) {
-                DepZNIListItem Item = new DepZNIListItem(items[0]);
+                DepZNIListItem Item = new DepZNIListItem(items[0],"");
+                if (items.length>1) {
+                    Item.Developer=items[1];
+                }
 
-                for (int idx = 1; idx < items.length; idx++) {
+                for (int idx = 2; idx < items.length; idx++) {
                     Item.DependenceList.add(items[idx]);
                 }
 
@@ -105,10 +108,12 @@ class ReleaseObject
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
             StringBuilder saveString = new StringBuilder(item.ZNI);
+            saveString.append(",").append(item.Developer);
+
             for (String itmZNI : item.DependenceList)
             {
                 if (!itmZNI.isEmpty()) {
-                    saveString.append(" ").append(itmZNI);
+                    saveString.append(",").append(itmZNI);
                 }
             }
             // saveString=item.ZNI+" "+saveString;
@@ -177,8 +182,9 @@ class ReleaseObject
         {
             // Проверяем что ЗНИ в объекте учтена в списке зависимых ЗНИ
             if (!Objects.equals(CheckInstallFile.sZNI, itemObject.ZNI)) if (CheckInterseptZNI(itemObject.ZNI)) {
-                if (!Objects.equals(CheckZNI, itemObject.ZNI))
+                if (!Objects.equals(CheckZNI, itemObject.ZNI)) {
                     ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
+                }
                 ZNIIntersectionItem.depListItems.add(itemObject);
             }
             if (!ZNIIntersectionItem.depListItems.isEmpty()) ZNIIntersectionList.add(ZNIIntersectionItem);
@@ -192,6 +198,15 @@ class ReleaseObject
                     ZNIIntersectionList.add(ZNIIntersectionItem);
                 }
 
+        // Запомним имя разработчика
+        for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
+        {
+            for (OverlapItem item : ZNIIntersectionList) {
+              if (itemZNI.ZNI.equals(item.mainZNI)) {
+                  item.Developer=itemZNI.Developer;
+              }
+            }
+        }
        // ArrayList<String> DetectedDependZNI=OverlapZNIDetector(DetectedObjectList);
 
         return ZNIIntersectionList;
@@ -220,19 +235,20 @@ class ReleaseObject
 
 
     // Заменить список ЗНИ в релизе
-    void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
+    void ChangeReleaseZNIList(InstallFile ChangeFile)
     {
-        DepZNIListItem RemoveItem=new DepZNIListItem("");
+        DepZNIListItem RemoveItem=new DepZNIListItem("","");
 
         for(DepZNIListItem item: ReleaseFullDepZNIList)
-            if (item.ZNI.equals(AddZNI)) {
+            if (item.ZNI.equals(ChangeFile.sZNI)) {
                 RemoveItem = item;
                 break;
             }
         if (!RemoveItem.ZNI.isEmpty()) ReleaseFullDepZNIList.remove(RemoveItem);
 
-        DepZNIListItem AddItem =new DepZNIListItem(AddZNI);
-        AddItem.DependenceList=ZNIList;
+        DepZNIListItem AddItem =new DepZNIListItem(ChangeFile.sZNI,ChangeFile.Developer);
+        AddItem.DependenceList=ChangeFile.DepZNIList;
+
         if (!AddItem.ZNI.isEmpty()) ReleaseFullDepZNIList.add(AddItem);
     }
 
