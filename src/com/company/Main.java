@@ -77,6 +77,17 @@ public class Main {
             {
                 System.out.println();
                 System.out.println(CheckInstFile.sZNI+" intersection check passed successfully");
+
+                ArrayList<String> InformZIN=ReleaseObjectsFile.GepDependenceZNIList(CheckInstFile);
+                if (!InformZIN.isEmpty())
+                {
+                    System.out.print("WARNING!!! Report the changes in RFC: ");
+                    for (String item :InformZIN)
+                    {
+                        System.out.print(item+" ");
+                    }
+                    System.out.println();
+                }
             }
         }
 
