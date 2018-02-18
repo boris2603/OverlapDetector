@@ -153,6 +153,7 @@ class InstallFile {
             if (Developer.isEmpty())
             {
                 Developer=GetMatchParamByStart(line,pDeveloper,12);
+                Developer=Developer.replace(',',' ');
             }
 
             // Создаем список PCK
