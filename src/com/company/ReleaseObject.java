@@ -10,14 +10,10 @@ import com.company.DepZNIListItem;
 class ReleaseObject
 {
     // Список всех объектов по ЗНИ
-    @SuppressWarnings("WeakerAccess")
-    final
-    ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
+    private final ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
 
     // Спосок всех ЗНИ и отмеченных зависимостей
-    @SuppressWarnings("WeakerAccess")
-    final
-    ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
+    private final ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
 
     private final String FileObjectName = "ODObjectList.txt";
     private final String FileZNIName = "ODZNIList.txt";
@@ -35,23 +31,24 @@ class ReleaseObject
     {
         List<String> lines = new ArrayList<>();
 
-        if (Files.exists(Paths.get(FileNamePath,FileZNIName))) {
-            try {
-                lines = Files.readAllLines(Paths.get(FileNamePath, FileZNIName), Charset.forName("windows-1251"));
-            } catch (IOException e) {
-                System.out.println("IO Error reading Objects File " + FileZNIName);
-                System.out.println(e.getLocalizedMessage());
-            }
+        if (Files.exists(Paths.get(FileNamePath,FileZNIName))) try {
+            lines = Files.readAllLines(Paths.get(FileNamePath, FileZNIName), Charset.forName("windows-1251"));
+        } catch (IOException e) {
+            System.out.println("IO Error reading Objects File " + FileZNIName);
+            System.out.println(e.getLocalizedMessage());
         }
 
         ReleaseFullDepZNIList.clear();
 
         for(String line : lines) {
-            String[] items = line.split(" ");
+            String[] items = line.split(",");
             if (items.length>0) {
-                DepZNIListItem Item = new DepZNIListItem(items[0]);
+                DepZNIListItem Item = new DepZNIListItem(items[0],"");
+                if (items.length>1) {
+                    Item.Developer=items[1];
+                }
 
-                for (int idx = 1; idx < items.length; idx++) {
+                for (int idx = 2; idx < items.length; idx++) {
                     Item.DependenceList.add(items[idx]);
                 }
 
@@ -61,18 +58,29 @@ class ReleaseObject
 
     }
 
+    //Получить список ЗНИ которые зависят от анализируемой
+    public ArrayList<String> GepDependenceZNIList(InstallFile CheckInstFile)
+    {
+        ArrayList<String> retVal=new ArrayList<>();
+
+        for (DepZNIListItem item : ReleaseFullDepZNIList)
+            if (!item.DependenceList.isEmpty())
+                    for (String itemDepList : item.DependenceList)
+                        if (itemDepList.equals(CheckInstFile.sZNI)) retVal.add(item.ZNI);
+        return retVal;
+    }
+
+
     // Загрузить список объектов и зависимых ЗНИ по релизу
     void LoadItemList()
     {
         List<String> lines = new ArrayList<>();
 
-        if (Files.exists(Paths.get(FileNamePath,FileObjectName))) {
-            try {
-                lines = Files.readAllLines(Paths.get(FileNamePath, FileObjectName), Charset.forName("windows-1251"));
-            } catch (IOException e) {
-                System.out.println("IO Error reading Objects File " + FileObjectName);
-                System.out.println(e.getLocalizedMessage());
-            }
+        if (Files.exists(Paths.get(FileNamePath,FileObjectName))) try {
+            lines = Files.readAllLines(Paths.get(FileNamePath, FileObjectName), Charset.forName("windows-1251"));
+        } catch (IOException e) {
+            System.out.println("IO Error reading Objects File " + FileObjectName);
+            System.out.println(e.getLocalizedMessage());
         }
 
         ReleaseFullItemsList.clear();
@@ -100,10 +108,12 @@ class ReleaseObject
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
             StringBuilder saveString = new StringBuilder(item.ZNI);
+            saveString.append(",").append(item.Developer);
+
             for (String itmZNI : item.DependenceList)
             {
                 if (!itmZNI.isEmpty()) {
-                    saveString.append(" ").append(itmZNI);
+                    saveString.append(",").append(itmZNI);
                 }
             }
             // saveString=item.ZNI+" "+saveString;
@@ -112,9 +122,7 @@ class ReleaseObject
 
         try
         {
-            if (Files.exists(Paths.get(FileNamePath,FileZNIName))){
-                Files.delete(Paths.get(FileNamePath,FileZNIName));
-            }
+            if (Files.exists(Paths.get(FileNamePath,FileZNIName))) Files.delete(Paths.get(FileNamePath, FileZNIName));
             Files.write(Paths.get(FileNamePath,FileZNIName), ObjectList, Charset.forName("windows-1251"), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         }
         catch (IOException e)
@@ -136,18 +144,13 @@ class ReleaseObject
 
 
         for(DepListItem item : ReleaseFullItemsList)
-        {
-            if (!item.ZNI.isEmpty()) {
-                ObjectList.add(item.ZNI+" "+item.Type+" "+item.TBP+" "+item.Object);
-            }
-        }
+            if (!item.ZNI.isEmpty()) ObjectList.add(item.ZNI + " " + item.Type + " " + item.TBP + " " + item.Object);
 
 
        try
         {
-            if (Files.exists(Paths.get(FileNamePath,FileObjectName))){
-                Files.delete(Paths.get(FileNamePath,FileObjectName));
-            }
+            if (Files.exists(Paths.get(FileNamePath,FileObjectName)))
+                Files.delete(Paths.get(FileNamePath, FileObjectName));
             Files.write(Paths.get(FileNamePath,FileObjectName), ObjectList, Charset.forName("windows-1251"), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         }
         catch (IOException e)
@@ -161,50 +164,49 @@ class ReleaseObject
     }
 
     // Список неразрешенных зависимостей по ЗНИ
-    ArrayList<OverlapItem> OverlapDetector(String ZNI, ArrayList<DepListItem> pZNIObjectList, ArrayList<String> DepZNIList)
+    ArrayList<OverlapItem> OverlapDetector(InstallFile CheckInstallFile)
+    // String ZNI, ArrayList<DepListItem> pZNIObjectList, ArrayList<String> DepZNIList)
     {
 
         // Список неразрешенных зависимостей по ЗНИ и объектам
         ArrayList<OverlapItem> ZNIIntersectionList= new ArrayList<>();
 
-        OverlapItem  ZNIIntersectionItem = new OverlapItem(ZNI);
+        OverlapItem  ZNIIntersectionItem = new OverlapItem(CheckInstallFile.sZNI);
         String CheckZNI="";
 
         // Получаем список всех зависимых объектов
-        ArrayList<DepListItem> IntersectionObjects = OverlapCandidatDetector(pZNIObjectList);
+        ArrayList<DepListItem> IntersectionObjects = OverlapCandidatDetector(CheckInstallFile.FullPCKItemsList);
 
         //Проверяем что объекты по ЗНИ учтены в списке работ
         for (DepListItem itemObject: IntersectionObjects)
         {
             // Проверяем что ЗНИ в объекте учтена в списке зависимых ЗНИ
-            if (!Objects.equals(ZNI, itemObject.ZNI)) {
-                if (CheckInterseptZNI(itemObject.ZNI))
-                {
-                  if (!Objects.equals(CheckZNI, itemObject.ZNI))
-                  {
-                      ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
-                  }
-                  ZNIIntersectionItem.depListItems.add(itemObject);
+            if (!Objects.equals(CheckInstallFile.sZNI, itemObject.ZNI)) if (CheckInterseptZNI(itemObject.ZNI)) {
+                if (!Objects.equals(CheckZNI, itemObject.ZNI)) {
+                    ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
                 }
+                ZNIIntersectionItem.depListItems.add(itemObject);
             }
-            if (!ZNIIntersectionItem.depListItems.isEmpty()) {
-                ZNIIntersectionList.add(ZNIIntersectionItem);
-            }
+            if (!ZNIIntersectionItem.depListItems.isEmpty()) ZNIIntersectionList.add(ZNIIntersectionItem);
         }
 
         // Проверим что ЗНИ от которых есть зависимость передавалось на стенд
-        if (!DepZNIList.isEmpty())
-        {
-            for (String TestZNI : DepZNIList)
-            {
-                if (!AlreadyInstallZNI(TestZNI))
-                {
+        if (!CheckInstallFile.DepZNIList.isEmpty())
+            for (String TestZNI : CheckInstallFile.DepZNIList)
+                if (!AlreadyInstallZNI(TestZNI)) {
                     ZNIIntersectionItem = new OverlapItem(TestZNI);
                     ZNIIntersectionList.add(ZNIIntersectionItem);
                 }
+
+        // Запомним имя разработчика
+        for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
+        {
+            for (OverlapItem item : ZNIIntersectionList) {
+              if (itemZNI.ZNI.equals(item.mainZNI)) {
+                  item.Developer=itemZNI.Developer;
+              }
             }
         }
-
        // ArrayList<String> DetectedDependZNI=OverlapZNIDetector(DetectedObjectList);
 
         return ZNIIntersectionList;
@@ -214,14 +216,11 @@ class ReleaseObject
     private boolean AlreadyInstallZNI(String CheckZNI)
     {
         boolean retval=false;
-        for (DepZNIListItem itemZNI : ReleaseFullDepZNIList) {
-
-            if (itemZNI.ZNI.equals(CheckZNI))
-            {
-                retval=true;
+        for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
+            if (itemZNI.ZNI.equals(CheckZNI)) {
+                retval = true;
                 break;
             }
-        }
         return retval;
     }
 
@@ -230,89 +229,27 @@ class ReleaseObject
 
         int depZNIPresentCount=0;
         for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
-            {
-                if (depZNI.CheckZNI(CheckZNI)) {
-                    depZNIPresentCount++;
-                }
-            }
+            if (depZNI.CheckZNI(CheckZNI)) depZNIPresentCount++;
             return (depZNIPresentCount==1);
     }
 
 
-// --Commented out by Inspection START (13.02.2018, 16:27):
-//    // Получить зни по которым есть не разрешенные пересечения TODO отладить
-//    ArrayList<String> OverlapZNIDetector(ArrayList<DepListItem> OverlapItems)
-//    {
-//        ArrayList<String> DependZNIList=new ArrayList<String>();
-//        String DependZNI="";
-//
-//        for (DepListItem item : OverlapItems)
-//        {
-//            int depZNIPresentCount=0;
-//
-//            if (DependZNI!=item.ZNI) {
-//                for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
-//                {
-//                    if (depZNI.CheckZNI(item.ZNI))
-//                    {
-//                        depZNIPresentCount++;
-//                    }
-//                }
-//                if (depZNIPresentCount==1) {
-//                    DependZNIList.add(item.ZNI);
-//                }
-//                DependZNI=item.ZNI;
-//            }
-//
-//        }
-//        return DependZNIList;
-//    }
-// --Commented out by Inspection STOP (13.02.2018, 16:27)
-
-
-// --Commented out by Inspection START (13.02.2018, 16:27):
-//    // Список ЗНИ и объектов по которым, есть неразрешенные пересечения
-//    ArrayList<DepListItem> OverlapObjectDetector(ArrayList<String> DependZNIList, ArrayList<DepListItem> OverlapItems)
-//    {
-//        ArrayList<DepListItem> DependItems=new ArrayList<DepListItem>();
-//
-//        // Проверить что ЗНИ есть в списке завсимых
-//        for(String ZNI : DependZNIList)
-//        {
-//            // Если найдено удалить записи о зависимостях
-//            for(DepListItem Item : OverlapItems)
-//            {
-//                if (Item.ZNI==ZNI && !CheckInterseptZNI(Item.ZNI)) {
-//                    DependItems.add(Item);
-//                }
-//            }
-//        }
-//        // Если нет оставить записи о зависимостях
-//        return DependItems;
-//    }
-// --Commented out by Inspection STOP (13.02.2018, 16:27)
-
     // Заменить список ЗНИ в релизе
-    void ChangeReleaseZNIList(String AddZNI, ArrayList<String> ZNIList)
+    void ChangeReleaseZNIList(InstallFile ChangeFile)
     {
-        DepZNIListItem RemoveItem=new DepZNIListItem("");
+        DepZNIListItem RemoveItem=new DepZNIListItem("","");
+
         for(DepZNIListItem item: ReleaseFullDepZNIList)
-        {
-            if (item.ZNI.equals(AddZNI))
-            {
-                RemoveItem=item;
+            if (item.ZNI.equals(ChangeFile.sZNI)) {
+                RemoveItem = item;
                 break;
             }
-        }
-        if (!RemoveItem.ZNI.isEmpty()) {
-            ReleaseFullDepZNIList.remove(RemoveItem);
-        }
+        if (!RemoveItem.ZNI.isEmpty()) ReleaseFullDepZNIList.remove(RemoveItem);
 
-        DepZNIListItem AddItem =new DepZNIListItem(AddZNI);
-        AddItem.DependenceList=ZNIList;
-        if (!AddItem.ZNI.isEmpty()) {
-            ReleaseFullDepZNIList.add(AddItem);
-        }
+        DepZNIListItem AddItem =new DepZNIListItem(ChangeFile.sZNI,ChangeFile.Developer);
+        AddItem.DependenceList=ChangeFile.DepZNIList;
+
+        if (!AddItem.ZNI.isEmpty()) ReleaseFullDepZNIList.add(AddItem);
     }
 
     // Заменить список объектов по ЗНИ в обзщем релизе
@@ -320,12 +257,9 @@ class ReleaseObject
     {
         ArrayList<DepListItem> RemoveFullItemsList = new ArrayList<>();
         //Удалить все записи по ЗНИ
-        for (DepListItem Item : ReleaseFullItemsList) {
+        for (DepListItem Item : ReleaseFullItemsList)
             if (Item.ZNI.equals(ZNI))
-            {
                 RemoveFullItemsList.add(Item);
-            }
-        }
         // Добавляем свежие объекты
         ReleaseFullItemsList.removeAll(RemoveFullItemsList);
         ReleaseFullItemsList.addAll(pZNIObjectList);
@@ -349,11 +283,7 @@ class ReleaseObject
         ArrayList<DepListItem> OverlapItems = new ArrayList<>();
 
         for(DepListItem Item:ReleaseFullItemsList)
-        {
-          if (!Item.ZNI.equals(checkItem.ZNI) && Item.DepObjectsCheck(checkItem)) {
-              OverlapItems.add(Item);
-          }
-        }
+            if (!Item.ZNI.equals(checkItem.ZNI) && Item.DepObjectsCheck(checkItem)) OverlapItems.add(Item);
         return OverlapItems;
     }
 
