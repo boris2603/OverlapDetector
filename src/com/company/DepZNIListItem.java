@@ -16,27 +16,22 @@ class DepZNIListItem {
         Developer=sDeveloper;
     }
 
-    // Проверим что ЗНИ есть в списках
+    // Проверим что ЗНИ есть в списках зависимых
     boolean CheckZNI(String TestZNI)
     {
-        boolean Result=false;
+        boolean retval=false;
 
-        if (TestZNI.equals(ZNI))
-        {
-            Result=true;
-        }
-        else
-        {
+        if (!DependenceList.isEmpty()) {
             for (String item : DependenceList)
             {
                 if (item.equals(TestZNI))
                 {
-                    Result=true;
+                    retval=true;
                     break;
                 }
             }
         }
-        return Result;
+        return retval;
     }
 
 }

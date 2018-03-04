@@ -171,7 +171,7 @@ class ReleaseObject
         // Список неразрешенных зависимостей по ЗНИ и объектам
         ArrayList<OverlapItem> ZNIIntersectionList= new ArrayList<>();
 
-        OverlapItem  ZNIIntersectionItem = new OverlapItem(CheckInstallFile.sZNI);
+        OverlapItem  ZNIIntersectionItem = new OverlapItem("");
         String CheckZNI="";
 
         // Получаем список всех зависимых объектов
@@ -181,14 +181,15 @@ class ReleaseObject
         for (DepListItem itemObject: IntersectionObjects)
         {
             // Проверяем что ЗНИ в объекте учтена в списке зависимых ЗНИ
-            if (!Objects.equals(CheckInstallFile.sZNI, itemObject.ZNI)) if (CheckInterseptZNI(itemObject.ZNI)) {
-                if (!Objects.equals(CheckZNI, itemObject.ZNI)) {
+            if (!CheckInterseptZNI(CheckInstallFile.sZNI, itemObject.ZNI))
+            {
+                if (!Objects.equals(CheckInstallFile.sZNI, ZNIIntersectionItem.mainZNI)) {
                     ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
                 }
                 ZNIIntersectionItem.depListItems.add(itemObject);
             }
-            if (!ZNIIntersectionItem.depListItems.isEmpty()) ZNIIntersectionList.add(ZNIIntersectionItem);
         }
+        if (!ZNIIntersectionItem.depListItems.isEmpty()) ZNIIntersectionList.add(ZNIIntersectionItem);
 
         // Проверим что ЗНИ от которых есть зависимость передавалось на стенд
         if (!CheckInstallFile.DepZNIList.isEmpty())
@@ -224,13 +225,20 @@ class ReleaseObject
         return retval;
     }
 
-    // Проверим что по ЗНИ не учтены звиссимости
-    private boolean CheckInterseptZNI(String CheckZNI){
+    // Если по ЗНИ учтены зависимости = true
+    private boolean CheckInterseptZNI(String CheckZNI, String DependZNI){
 
-        int depZNIPresentCount=0;
+        boolean retval=false;
+
         for (DepZNIListItem depZNI: ReleaseFullDepZNIList )
-            if (depZNI.CheckZNI(CheckZNI)) depZNIPresentCount++;
-            return (depZNIPresentCount==1);
+            if (!CheckZNI.equals(depZNI.ZNI)) {
+                if (depZNI.ZNI.equals(DependZNI))
+                    if (depZNI.CheckZNI(CheckZNI)) {
+                        retval = true;
+                        break;
+                    }
+            }
+        return retval;
     }
 
 

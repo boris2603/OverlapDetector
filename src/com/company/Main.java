@@ -64,7 +64,7 @@ public class Main {
                     } else {
                         System.out.println();
                         for (DepListItem depListItem : item.depListItems) {
-                            System.out.print(depListItem.Type + " " + depListItem.TBP + " " + depListItem.Object);
+                            System.out.print(depListItem.ZNI + " " + depListItem.Type + " " + depListItem.TBP + " " + depListItem.Object);
                         }
                     }
                     System.out.println();
