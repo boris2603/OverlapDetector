@@ -16,18 +16,19 @@ public class Main {
             System.out.println(" -s storage update only, no intersection detector ");
             return;
         }
-        String FILE_NAME=args[0];
-        String STORAGE_PATH=args[1];
-        boolean OnlyStorage=false;
-        if (args.length==3) {
-            OnlyStorage=args[2].equals("-s");
+        String FILE_NAME = args[0];   // полное имя файла install.txt кандидата
+        String STORAGE_PATH = args[1]; // путь к основному билду=путь к сводным файлам  зависимостей и объектов
+
+        boolean OnlyStorage = false;
+        if (args.length == 3) {
+            OnlyStorage = args[2].equals("-s");
         }
 
-        ReleaseObject ReleaseObjectsFile=new ReleaseObject(STORAGE_PATH);
-        ReleaseObjectsFile.LoadItemList();
-        ReleaseObjectsFile.LoadZNIList();
+        ReleaseObject ReleaseObjectsFile = new ReleaseObject(STORAGE_PATH);
+        ReleaseObjectsFile.LoadItemList(); // считываем файл с объектами релиза
+        ReleaseObjectsFile.LoadZNIList();  // считываем файл с перечнем ЗНИ и зависимостей
         
-        InstallFile CheckInstFile=new InstallFile(FILE_NAME);
+        InstallFile CheckInstFile = new InstallFile(FILE_NAME); //  парсим входной install.txt
         if (CheckInstFile.HasError())
         {
             System.out.println();
@@ -52,19 +53,20 @@ public class Main {
         }
         else
         {
-            ArrayList<OverlapItem> ZNIDepend=ReleaseObjectsFile.OverlapDetector(CheckInstFile);
+            ArrayList<OverlapItem> ZNIDepend = ReleaseObjectsFile.OverlapDetector(CheckInstFile);
             if (!ZNIDepend.isEmpty())
             {
                 System.out.println();
-                System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + ":");
+                System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + CheckInstFile.Developer + ":");
                 for (OverlapItem item : ZNIDepend) {
-                    System.out.print(item.mainZNI + " "+item.Developer);
+                    System.out.print(item.mainZNI + " " + item.Developer);
                     if (item.depListItems.isEmpty()) {
                         System.out.print(" not installed");
                     } else {
                         System.out.println();
                         for (DepListItem depListItem : item.depListItems) {
                             System.out.print(depListItem.ZNI + " " + depListItem.Type + " " + depListItem.TBP + " " + depListItem.Object);
+                            System.out.println();
                         }
                     }
                     System.out.println();
@@ -87,9 +89,9 @@ public class Main {
                     }
                     System.out.println();
                 }
+                // Установить ERRORLEVEL как без ошибок
+                System.exit(0);
             }
         }
-
     }
 }
-

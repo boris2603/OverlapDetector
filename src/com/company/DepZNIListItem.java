@@ -33,5 +33,4 @@ class DepZNIListItem {
         }
         return retval;
     }
-
 }

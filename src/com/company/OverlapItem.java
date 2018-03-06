@@ -8,14 +8,15 @@ import java.util.ArrayList;
 class OverlapItem {
     final String mainZNI;
     String Developer;
-    final ArrayList<DepListItem> depListItems;
     final ArrayList<String> EmailList;
+    final ArrayList<DepListItem> depListItems;
 
     OverlapItem(String ZNI)
     {
-        mainZNI=ZNI;
-        Developer="";
-        depListItems= new ArrayList<>();
-        EmailList= new ArrayList<>();
+        mainZNI = ZNI;
+
+        Developer = "";
+        depListItems = new ArrayList<>();
+        EmailList = new ArrayList<>();
     }
 }
