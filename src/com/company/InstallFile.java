@@ -98,6 +98,10 @@ class InstallFile {
                 {
                     sZNI = GetMatchParam(line, pUnity,0);
                 }
+                if (!sZNI.isEmpty())
+                {
+                    sZNI=sZNI.replace(' ','_');
+                }
             }
             // Получаем ФИО разработчика
             if (Developer.isEmpty())
