@@ -57,7 +57,7 @@ public class Main {
             if (!ZNIDepend.isEmpty())
             {
                 System.out.println();
-                System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + CheckInstFile.Developer + ":");
+                System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI +" "+ CheckInstFile.Developer + ":");
                 for (OverlapItem item : ZNIDepend) {
                     System.out.print(item.mainZNI + " " + item.Developer);
                     if (item.depListItems.isEmpty()) {

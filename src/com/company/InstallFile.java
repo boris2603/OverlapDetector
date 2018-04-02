@@ -35,7 +35,7 @@ class InstallFile {
     private final Pattern pEMail = Pattern.compile("<[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})>");
     // PCK файлы для установки
     private final Pattern pPCKListIndicator = Pattern.compile("Установить", Pattern.CASE_INSENSITIVE);
-    private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*\\w*\\.pck", Pattern.CASE_INSENSITIVE);
+    private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*\\w*\\.pck", Pattern.CASE_INSENSITIVE);
     // Список ЗНИ зависимостей
     private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*после", Pattern.CASE_INSENSITIVE);
     private final Pattern pDependZNI = Pattern.compile("[0-9]{6}");
@@ -43,6 +43,10 @@ class InstallFile {
     private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Разработчик
     private final Pattern pDeveloper = Pattern.compile("(Разработчик|Разработчики)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
+    // ЗНО/CI/C0/SD и прочая светотень
+    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM).*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
+    // UNITY
+    private final Pattern pUnity = Pattern.compile("(UNITY)(.*|_)[0-9]{6}", Pattern.CASE_INSENSITIVE);
 
     // Индикатор, что у нас есть ошибки парсинга файлов
     boolean HasError()
@@ -85,12 +89,20 @@ class InstallFile {
             // Получаем номер ЗНИ
             if (sZNI.isEmpty())
             {
-                sZNI = GetMatchParam(line, pZNI);
+                sZNI = GetMatchParam(line, pZNI,2);
+                if (sZNI.isEmpty())
+                {
+                    sZNI = GetMatchParam(line, pZNO,0);
+                }
+                if (sZNI.isEmpty())
+                {
+                    sZNI = GetMatchParam(line, pUnity,0);
+                }
             }
             // Получаем ФИО разработчика
             if (Developer.isEmpty())
             {
-                Developer = GetMatchParam(line, pDeveloper);
+                Developer = GetMatchParam(line, pDeveloper, 2);
                 Developer = Developer.replace(',',' ');
             }
 
@@ -130,12 +142,12 @@ class InstallFile {
         return ResultList;
     }
 
-    private String GetMatchParam(String line, Pattern pPattern) {
+    private String GetMatchParam(String line, Pattern pPattern, int MatchGroupIdx) {
         String Result = "";
 
         Matcher m = pPattern.matcher(line);
         if (m.find())  {
-            Result = m.group(2);
+            Result = m.group(MatchGroupIdx);
         }
         return Result;
     }
@@ -185,14 +197,19 @@ class InstallFile {
     {
         List<String> lines = new ArrayList<>();
 
-        try {
-            lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
-        }
-        catch (IOException e)
+        if (!Files.exists(Paths.get(FileName)))
         {
-            System.out.println("IO Error reading Install File " + FileName);
-            System.out.println(e.getMessage());
-            HasErrorString = HasErrorString + "IO error reading Install File " + FileName + System.lineSeparator();
+            System.out.println("File not found " + FileName);
+            HasErrorString = HasErrorString + "File not found " + FileName + System.lineSeparator();
+        }
+        else {
+            try {
+                lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
+            } catch (IOException e) {
+                System.out.println("IO Error reading file " + FileName);
+                System.out.println(e.getMessage());
+                HasErrorString = HasErrorString + "IO error reading File " + FileName + System.lineSeparator();
+            }
         }
         return lines;
     }
