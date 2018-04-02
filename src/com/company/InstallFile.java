@@ -31,7 +31,7 @@ class InstallFile {
 
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
-    private final Pattern pZNI = Pattern.compile("(ЗНИ|RFC).*([0-9]{6})", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNI = Pattern.compile("(ЗНИ|RFC)\\W*([0-9]{6})", Pattern.CASE_INSENSITIVE);
     private final Pattern pEMail = Pattern.compile("<[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})>");
     // PCK файлы для установки
     private final Pattern pPCKListIndicator = Pattern.compile("Установить", Pattern.CASE_INSENSITIVE);
@@ -44,7 +44,7 @@ class InstallFile {
     // Разработчик
     private final Pattern pDeveloper = Pattern.compile("(Разработчик|Разработчики)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
     // ЗНО/CI/C0/SD и прочая светотень
-    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM).*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
     // UNITY
     private final Pattern pUnity = Pattern.compile("(UNITY)(.*|_)[0-9]{6}", Pattern.CASE_INSENSITIVE);
 
