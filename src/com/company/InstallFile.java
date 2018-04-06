@@ -191,7 +191,7 @@ class InstallFile {
                         {
                             dplItem.Object = items[1];
                             dplItem.TBP = "";
-                        }
+                        };
                         dplItem.Type = items[0];
                         if (!ObjectAlreadyInList(dplItem)) {
                             DepList.add(dplItem);
