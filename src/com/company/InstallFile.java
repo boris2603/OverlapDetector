@@ -183,8 +183,15 @@ class InstallFile {
                     case "IDX":
                         DepListItem dplItem = new DepListItem();
                         dplItem.ZNI = sZNI;
-                        dplItem.Object = items[2];
-                        dplItem.TBP = items[1];
+                        if (items.length==3) {
+                            dplItem.Object = items[2];
+                            dplItem.TBP = items[1];
+                        }
+                        else
+                        {
+                            dplItem.Object = items[1];
+                            dplItem.TBP = "";
+                        }
                         dplItem.Type = items[0];
                         if (!ObjectAlreadyInList(dplItem)) {
                             DepList.add(dplItem);
