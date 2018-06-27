@@ -11,16 +11,27 @@ class ReleaseObject
     private final ArrayList<DepListItem> ReleaseFullItemsList = new ArrayList<>();
     // Спосок всех ЗНИ и отмеченных зависимостей
     private final ArrayList<DepZNIListItem> ReleaseFullDepZNIList = new ArrayList<>();
+    // Список зависимостей по проверяемой ЗНИ
+    private ArrayList<OverlapItem> ZNIIntersectionList = new ArrayList<>();
 
     private final String FileObjectName = "ODObjectList.txt";
     private final String FileZNIName    = "ODZNIList.txt";
     private final String FileNamePath;
 
+    public boolean isErrorDetected() {
+        return ErrorDetected;
+    }
+
+    private boolean ErrorDetected;
+
     ReleaseObject(String ODFileNamePath)
     {
         FileNamePath=ODFileNamePath;
-    }
+        ErrorDetected = false;
 
+        LoadItemList(); // считываем файл с объектами релиза
+        LoadZNIList();  // считываем файл с перечнем ЗНИ и зависимостей
+    }
 
 
     // Загрузить список ЗНИ по релизу
@@ -83,7 +94,7 @@ class ReleaseObject
 
     //Получить список ЗНИ которые зависят от анализируемой
 
-    public ArrayList<String> GepDependenceZNIList(InstallFile CheckInstFile)
+    public ArrayList<String> GetDependenceZNIList(InstallFile CheckInstFile)
     {
         ArrayList<String> retVal = new ArrayList<>();
 
@@ -116,7 +127,7 @@ class ReleaseObject
 
         try
         {
-            if (Files.exists(Paths.get(FileNamePath,FileZNIName))) Files.delete(Paths.get(FileNamePath, FileZNIName));
+            Files.deleteIfExists(Paths.get(FileNamePath, FileZNIName));
             Files.write(Paths.get(FileNamePath,FileZNIName), ObjectList, Charset.forName("windows-1251"), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         }
         catch (IOException e)
@@ -141,8 +152,7 @@ class ReleaseObject
 
         try
         {
-            if (Files.exists(Paths.get(FileNamePath,FileObjectName)))
-                Files.delete(Paths.get(FileNamePath, FileObjectName));
+            Files.deleteIfExists(Paths.get(FileNamePath, FileObjectName));
             Files.write(Paths.get(FileNamePath,FileObjectName), ObjectList, Charset.forName("windows-1251"), StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
         }
         catch (IOException e)
@@ -155,12 +165,10 @@ class ReleaseObject
     }
 
     // Список неразрешенных зависимостей по ЗНИ
-    ArrayList<OverlapItem> OverlapDetector(InstallFile CheckInstallFile)
+    public void OverlapDetector(InstallFile CheckInstallFile)
     {
         // Список неразрешенных зависимостей по ЗНИ и объектам
-        ArrayList<OverlapItem> ZNIIntersectionList = new ArrayList<>();
-        //OverlapItem  ZNIIntersectionItem = new OverlapItem(CheckInstallFile.sZNI);
-        //OverlapItem  ZNIIntersectionItem = new OverlapItem("");
+        ZNIIntersectionList = new ArrayList<>();
         String CheckZNI = "";
 
         // Получаем список всех зависимых объектов
@@ -208,7 +216,10 @@ class ReleaseObject
               }
             }
         }
-        return ZNIIntersectionList;
+        // Проверим что есть ошибки
+        ErrorDetected=!ZNIIntersectionList.isEmpty();
+
+        // return ZNIIntersectionList;
     }
 
     // Проверим что ЗНИ устанавливалось на стенд
@@ -273,16 +284,16 @@ class ReleaseObject
     }
 
     // Заменить список объектов по ЗНИ в обзщем релизе
-    void ChangeReleaseItemList(String pZNI, ArrayList<DepListItem> pZNIObjectList)
+    void ChangeReleaseItemList(InstallFile ChangeFile)
     {
         ArrayList<DepListItem> RemoveFullItemsList = new ArrayList<>();
         //Удалить все записи по ЗНИ
         for (DepListItem Item : ReleaseFullItemsList)
-            if (Item.ZNI.equals(pZNI))
+            if (Item.ZNI.equals(ChangeFile.sZNI))
                 RemoveFullItemsList.add(Item);
         // Добавляем свежие объекты
         ReleaseFullItemsList.removeAll(RemoveFullItemsList);
-        ReleaseFullItemsList.addAll(pZNIObjectList);
+        ReleaseFullItemsList.addAll(ChangeFile.FullPCKItemsList);
     }
 
     // Определить список объектов по которым есть пересечения
@@ -307,5 +318,79 @@ class ReleaseObject
         for(DepListItem Item: ReleaseFullItemsList)
             if (Item.DepObjectsCheck(checkItem) && !Item.ZNI.equals(checkItem.ZNI)) OverlapItems.add(Item);
         return OverlapItems;
+    }
+
+    // Сгенерировать текст отчета по проверке
+    public String GenerateReportText(InstallFile CheckInstFile, boolean MachineReadyFormat) {
+
+        // ArrayList<OverlapItem> ZNIDepend = this.OverlapDetector(CheckInstFile);
+        String LogFileText =  new String();
+
+        if (!ZNIIntersectionList.isEmpty())
+        {
+            if (!MachineReadyFormat) LogFileText=LogFileText.concat(String.format("\nNot allowed intersections by RFC %s %s:\n",CheckInstFile.sZNI,CheckInstFile.Developer));
+            for (OverlapItem item : ZNIIntersectionList) {
+                if (!MachineReadyFormat) LogFileText=LogFileText.concat(String.format("%s %s",item.mainZNI,item.Developer));
+                if (item.depListItems.isEmpty()) {
+                    LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("%s %s,1,%s %s\n",CheckInstFile.sZNI,CheckInstFile.Developer,item.mainZNI,item.Developer)) : LogFileText.concat(" not installed \n");
+                } else {
+                    for (DepListItem depListItem : item.depListItems) {
+                        LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("%s %s,2,%s %s, %s %s %s \n",CheckInstFile.sZNI,CheckInstFile.Developer, depListItem.ZNI, item.Developer,depListItem.Type,depListItem.TBP,depListItem.Object)) :
+                                            LogFileText.concat(String.format("\n  %s %s %s %s \n",depListItem.ZNI,depListItem.Type,depListItem.TBP,depListItem.Object));
+                    }
+                }
+            }
+        }
+        else
+        {
+            LogFileText=LogFileText.concat(String.format("\n %s intersection check passed successfully"));
+
+
+            ArrayList<String> InformZIN=this.GetDependenceZNIList(CheckInstFile);
+            if (!InformZIN.isEmpty())
+            {
+                LogFileText=LogFileText.concat("WARNING!!! Report the changes in RFC: ");
+                for (String item :InformZIN)
+                {
+                    LogFileText=LogFileText.concat(item.concat(" "));
+                }
+                LogFileText=LogFileText.concat("\n");
+            }
+        }
+
+    return LogFileText;
+    }
+
+    // Записать отчет в файл
+    public void SaveReport(String LogFileName, InstallFile CheckInsFile, boolean AppendLogFile)
+    {
+        String ReportText = "";
+
+        if (CheckInsFile.HasError())
+        {
+            ReportText = String.format("%s,3,%s",CheckInsFile.sZNI,CheckInsFile.getInstallFileMasterPath());
+        }
+        else ReportText = this.GenerateReportText(CheckInsFile, true);
+
+        try
+        {
+            if (AppendLogFile)
+            {
+                if (!Files.exists(Paths.get(LogFileName)))
+                    Files.write(Paths.get(LogFileName), ReportText.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                else Files.write(Paths.get(LogFileName), ReportText.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.APPEND);
+            }
+            else {
+                Files.deleteIfExists(Paths.get(LogFileName));
+                Files.write(Paths.get(LogFileName), ReportText.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            };
+        }
+        catch (IOException e)
+        {
+            System.out.println("IO Error writing Objects File "+LogFileName);
+            System.out.println(e.getLocalizedMessage());
+            System.out.println(e.getMessage());
+            System.out.println(e.fillInStackTrace());
+        }
     }
 }

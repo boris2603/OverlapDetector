@@ -3,93 +3,96 @@ package com.company;
 import java.util.*;
 import com.company.DepListItem;
 import com.company.InstallFile;
+import java.nio.file.*;
 
 
 // Detector of not allowed dependencies
+
 @SuppressWarnings("WeakerAccess")
 public class Main {
 
     @SuppressWarnings("LoopStatementThatDoesntLoop")
     public static void main(String[] args) {
+
         if (args.length < 2)  {
-            System.out.println("Usage java OverlapDetector.jar install.txt_file_path storage_files_path -s");
+            System.out.println("Usage java OverlapDetector.jar install.txt_file_path storage_files_path -s -l [machine read log filename]");
             System.out.println(" -s storage update only, no intersection detector ");
+            System.out.println(" -l generate machine read log");
+            System.out.println("[machine read log filename] if -l parameter detected, machine read log write in it file, if parameter not set, log write in file 'install directory'.err ");
             return;
         }
+
         String FILE_NAME = args[0];   // полное имя файла install.txt кандидата
         String STORAGE_PATH = args[1]; // путь к основному билду=путь к сводным файлам  зависимостей и объектов
 
+        int NextArgIdx=2;
+
         boolean OnlyStorage = false;
-        if (args.length == 3) {
-            OnlyStorage = args[2].equals("-s");
+        if (args.length == (NextArgIdx+1)) {
+            OnlyStorage = args[NextArgIdx].equals("-s");
+            NextArgIdx= OnlyStorage ? NextArgIdx+1 : NextArgIdx;
+        }
+        boolean LogToFile = false;
+        boolean AppendLogFile =false;
+
+        String LogFileName = new String();
+
+        if ((args.length >= (NextArgIdx+1)) && !OnlyStorage) {
+            LogToFile = args[NextArgIdx].equals("-l");
+
+            if ((args.length == (NextArgIdx+2)) && LogToFile) {
+                LogFileName=args[NextArgIdx+1];
+                AppendLogFile=true;
+            } else {
+                LogFileName=Paths.get(FILE_NAME).getParent().toString().concat("err");
+            }
         }
 
         ReleaseObject ReleaseObjectsFile = new ReleaseObject(STORAGE_PATH);
-        ReleaseObjectsFile.LoadItemList(); // считываем файл с объектами релиза
-        ReleaseObjectsFile.LoadZNIList();  // считываем файл с перечнем ЗНИ и зависимостей
-        
+
         InstallFile CheckInstFile = new InstallFile(FILE_NAME); //  парсим входной install.txt
         if (CheckInstFile.HasError())
         {
             System.out.println();
             System.out.println(CheckInstFile.getHasErrorString());
+            // Сохранить отчет об ошибке
+            if (LogToFile) {
+                ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,AppendLogFile);
+            }
+            // Установить ERRORLEVEL как ошибка
             System.exit(-1);
         }
 
         if (OnlyStorage) {
             // Обновить объекты PCK
-            ReleaseObjectsFile.ChangeReleaseItemList(CheckInstFile.sZNI, CheckInstFile.FullPCKItemsList);
+            ReleaseObjectsFile.ChangeReleaseItemList(CheckInstFile);
             // Обновить список ЗНИ
             ReleaseObjectsFile.ChangeReleaseZNIList(CheckInstFile);
-
             // Сохранить полный список ЗНИ
             ReleaseObjectsFile.SaveZNIList();
-
             // Сохранить полный список объектов PCK
             ReleaseObjectsFile.SaveItemList();
-
             // Установить ERRORLEVEL как без ошибок
             System.exit(0);
         }
         else
         {
-            ArrayList<OverlapItem> ZNIDepend = ReleaseObjectsFile.OverlapDetector(CheckInstFile);
-            if (!ZNIDepend.isEmpty())
+            ReleaseObjectsFile.OverlapDetector(CheckInstFile);
+
+
+            System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, false));
+            if (ReleaseObjectsFile.isErrorDetected())
             {
-                System.out.println();
-                System.out.println("Not allowed intersections by RFC " + CheckInstFile.sZNI + " " + CheckInstFile.Developer + ":");
-                for (OverlapItem item : ZNIDepend) {
-                    System.out.print(item.mainZNI + " " + item.Developer);
-                    if (item.depListItems.isEmpty()) {
-                        System.out.print(" not installed");
-                    } else {
-                        System.out.println();
-                        for (DepListItem depListItem : item.depListItems) {
-                            System.out.print(depListItem.ZNI + " " + depListItem.Type + " " + depListItem.TBP + " " + depListItem.Object);
-                            System.out.println();
-                        }
-                    }
-                    System.out.println();
+                // Сохранить отчет об ошибке
+                if (LogToFile) {
+                    ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile, AppendLogFile);
                 }
                 // Установить ERRORLEVEL как ошибка
                 System.exit(-1);
             }
             else
             {
-                System.out.println();
-                System.out.println(CheckInstFile.sZNI+" intersection check passed successfully");
-
-                ArrayList<String> InformZIN=ReleaseObjectsFile.GepDependenceZNIList(CheckInstFile);
-                if (!InformZIN.isEmpty())
-                {
-                    System.out.print("WARNING!!! Report the changes in RFC: ");
-                    for (String item :InformZIN)
-                    {
-                        System.out.print(item+" ");
-                    }
-                    System.out.println();
-                }
-                // Установить ERRORLEVEL как без ошибок
+                // Установить ERRORLEVEL как ошибка
                 System.exit(0);
             }
         }

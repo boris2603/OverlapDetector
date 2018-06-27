@@ -14,9 +14,13 @@ class InstallFile {
     // результаты разбора
     public String sZNI ="";
     public String Developer;
-    public final ArrayList<DepListItem> FullPCKItemsList = new ArrayList<>();
-    public final ArrayList<String> DepZNIList= new ArrayList<>();
-    public final ArrayList<String> EmailList= new ArrayList<>();
+    public ArrayList<DepListItem> FullPCKItemsList = new ArrayList<>();
+    public ArrayList<String> DepZNIList= new ArrayList<>();
+    public ArrayList<String> EmailList= new ArrayList<>();
+
+    public String getInstallFileMasterPath() {
+        return InstallFileMasterPath;
+    }
 
     // Путь к файлам где лежит дистрибутив
     private final String InstallFileMasterPath;
@@ -28,6 +32,9 @@ class InstallFile {
     private final ArrayList<String> pckList = new ArrayList<>();
     // Список MDB файлов
     private final ArrayList<String> mdbList = new ArrayList<>();
+
+    // Следующая строка скорее всего разработчик
+    private boolean NextLineIsDeveloper=false;
 
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
@@ -42,7 +49,7 @@ class InstallFile {
     // Индикатор что есть Mdb
     private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Разработчик
-    private final Pattern pDeveloper = Pattern.compile("(Разработчик|Разработчики)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
+    private final Pattern pDeveloper = Pattern.compile("(Разработчики|Разработчик)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
     // ЗНО/CI/C0/SD и прочая светотень
     private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
     // UNITY
@@ -106,8 +113,18 @@ class InstallFile {
             // Получаем ФИО разработчика
             if (Developer.isEmpty())
             {
-                Developer = GetMatchParam(line, pDeveloper, 2);
-                Developer = Developer.replace(',',' ');
+
+                if (PatternFound(line,pDeveloper)) {
+                    Developer = GetMatchParam(line, pDeveloper, 2);
+                    Developer = Developer.replace(',',' ');
+                    if (Developer.length()<4) { Developer=""; }; // Костыль по определению разработчика, 2 группа равна : если в install  указано Разработчики:
+                    NextLineIsDeveloper=Developer.isEmpty();
+                }
+                else
+                    if (NextLineIsDeveloper)
+                    {
+                        Developer=line.replace(',',' ');
+                    }
             }
 
             // Создаем список PCK
@@ -123,6 +140,14 @@ class InstallFile {
 
     }
 
+    // Встречается-ли паттерн в строке
+    private boolean PatternFound(String line, Pattern pPattern)
+    {
+        Matcher m = pPattern.matcher(line);
+        return m.find();
+    }
+
+    // Получить массив подстрок в котором встечается pPattern
     private ArrayList<String> GetMatchList(String line, Pattern pPattern)
     {
         ArrayList<String> ResultList = new ArrayList<>();
