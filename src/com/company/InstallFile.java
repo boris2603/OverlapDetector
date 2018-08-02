@@ -2,12 +2,14 @@ package com.company;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.regex.*;
 import java.util.*;
-
+import java.lang.Exception;
 
 class InstallFile {
 
@@ -42,16 +44,16 @@ class InstallFile {
     private final Pattern pEMail = Pattern.compile("<[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})>");
     // PCK файлы для установки
     private final Pattern pPCKListIndicator = Pattern.compile("Установить", Pattern.CASE_INSENSITIVE);
-    private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*\\w*\\.pck", Pattern.CASE_INSENSITIVE);
+    private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*[_A-Za-z0-9-]*\\.pck", Pattern.CASE_INSENSITIVE);
     // Список ЗНИ зависимостей
     private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*после", Pattern.CASE_INSENSITIVE);
     private final Pattern pDependZNI = Pattern.compile("[0-9]{6}");
     // Индикатор что есть Mdb
-    private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*\\w*\\.mdb", Pattern.CASE_INSENSITIVE);
+    private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*[_A-Za-z0-9-]*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Разработчик
     private final Pattern pDeveloper = Pattern.compile("(Разработчики|Разработчик)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
     // ЗНО/CI/C0/SD и прочая светотень
-    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM|ZNO)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
     // UNITY
     private final Pattern pUnity = Pattern.compile("(UNITY)(.*|_)[0-9]{6}", Pattern.CASE_INSENSITIVE);
 
@@ -117,6 +119,7 @@ class InstallFile {
                 if (PatternFound(line,pDeveloper)) {
                     Developer = GetMatchParam(line, pDeveloper, 2);
                     Developer = Developer.replace(',',' ');
+                    Developer = Developer.trim();
                     if (Developer.length()<4) { Developer=""; }; // Костыль по определению разработчика, 2 группа равна : если в install  указано Разработчики:
                     NextLineIsDeveloper=Developer.isEmpty();
                 }
@@ -124,6 +127,7 @@ class InstallFile {
                     if (NextLineIsDeveloper)
                     {
                         Developer=line.replace(',',' ');
+                        Developer=Developer.trim();
                     }
             }
 
@@ -229,24 +233,34 @@ class InstallFile {
     }
 
     // Загрузить файл с диска с обработкой ошибок
-    private List<String> LoadFile(String FileName)
-    {
+    private List<String> LoadFile(String FileName) {
         List<String> lines = new ArrayList<>();
 
         if (!Files.exists(Paths.get(FileName)))
-        {
+            {
             System.out.println("File not found " + FileName);
             HasErrorString = HasErrorString + "File not found " + FileName + System.lineSeparator();
-        }
-        else {
-            try {
-                lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
-            } catch (IOException e) {
-                System.out.println("IO Error reading file " + FileName);
-                System.out.println(e.getMessage());
-                HasErrorString = HasErrorString + "IO error reading File " + FileName + System.lineSeparator();
             }
-        }
+        else
+            {
+                try {
+                    lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
+                    } catch (UnmappableCharacterException UECEx) {
+                            try {
+                            lines = Files.readAllLines(Paths.get(FileName),Charset.forName("UTF-8"));
+                            } catch (Exception e) {
+                            System.out.println("IO Error reading file " + FileName);
+                            System.out.println(e.getMessage());
+                            HasErrorString = HasErrorString + "IO error reading File " + FileName + System.lineSeparator();
+                        }
+                }
+                catch (IOException IOEx)
+                {
+                    System.out.println("IO Error reading file " + FileName);
+                    System.out.println(IOEx.getMessage());
+                    HasErrorString = HasErrorString + "IO error reading File " + FileName + System.lineSeparator();
+                }
+            }
         return lines;
     }
 

@@ -343,7 +343,7 @@ class ReleaseObject
         }
         else
         {
-            LogFileText=LogFileText.concat(String.format("\n %s intersection check passed successfully"));
+            LogFileText=LogFileText.concat(String.format("\n %s intersection check passed successfully",CheckInstFile.sZNI));
 
 
             ArrayList<String> InformZIN=this.GetDependenceZNIList(CheckInstFile);

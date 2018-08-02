@@ -28,7 +28,7 @@ public class Main {
         int NextArgIdx=2;
 
         boolean OnlyStorage = false;
-        if (args.length == (NextArgIdx+1)) {
+        if (args.length >= (NextArgIdx+1)) {
             OnlyStorage = args[NextArgIdx].equals("-s");
             NextArgIdx= OnlyStorage ? NextArgIdx+1 : NextArgIdx;
         }
