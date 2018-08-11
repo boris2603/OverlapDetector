@@ -15,8 +15,10 @@ public class Main {
     public static void main(String[] args) {
 
         if (args.length < 2)  {
-            System.out.println("Usage java OverlapDetector.jar install.txt_file_path storage_files_path -s -l [machine read log filename]");
+            System.out.println("Usage java OverlapDetector.jar install.txt_file_path storage_files_path -s -e -ew -l [machine read log filename]");
             System.out.println(" -s storage update only, no intersection detector ");
+            System.out.println(" -e log only errors");
+            System.out.println(" -w log warnings");
             System.out.println(" -l generate machine read log");
             System.out.println("[machine read log filename] if -l parameter detected, machine read log write in it file, if parameter not set, log write in file 'install directory'.err ");
             return;
@@ -28,24 +30,36 @@ public class Main {
         int NextArgIdx=2;
 
         boolean OnlyStorage = false;
-        if (args.length >= (NextArgIdx+1)) {
-            OnlyStorage = args[NextArgIdx].equals("-s");
-            NextArgIdx= OnlyStorage ? NextArgIdx+1 : NextArgIdx;
-        }
+        boolean OnlyError = false;
+        boolean AlsoLogWarning = false;
+
         boolean LogToFile = false;
         boolean AppendLogFile =false;
 
         String LogFileName = new String();
 
-        if ((args.length >= (NextArgIdx+1)) && !OnlyStorage) {
-            LogToFile = args[NextArgIdx].equals("-l");
-
-            if ((args.length == (NextArgIdx+2)) && LogToFile) {
-                LogFileName=args[NextArgIdx+1];
-                AppendLogFile=true;
-            } else {
-                LogFileName=Paths.get(FILE_NAME).getParent().toString().concat("err");
-            }
+         while (args.length > NextArgIdx) {
+            switch (args[NextArgIdx]) {
+                case "-s":
+                     OnlyStorage=true;
+                     break;
+                case "-e":
+                      OnlyError=true;
+                      break;
+                case "-w":
+                      AlsoLogWarning=true;
+                      break;
+                case "-l":
+                    LogToFile = true;
+                    if ((NextArgIdx+1) < args.length ) {
+                        LogFileName=args[NextArgIdx+1];
+                        AppendLogFile=true;
+                    } else {
+                        LogFileName=Paths.get(Paths.get(FILE_NAME).getParent().toString(),"OverlapDetector.err").toString();
+                    }
+                    break;
+            };
+            NextArgIdx= NextArgIdx+1;
         }
 
         ReleaseObject ReleaseObjectsFile = new ReleaseObject(STORAGE_PATH);
@@ -57,7 +71,7 @@ public class Main {
             System.out.println(CheckInstFile.getHasErrorString());
             // Сохранить отчет об ошибке
             if (LogToFile) {
-                ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,AppendLogFile);
+                ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,AppendLogFile,OnlyError,AlsoLogWarning);
             }
             // Установить ERRORLEVEL как ошибка
             System.exit(-1);
@@ -80,12 +94,12 @@ public class Main {
             ReleaseObjectsFile.OverlapDetector(CheckInstFile);
 
 
-            System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, false));
+            System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, LogToFile, OnlyError, AlsoLogWarning));
             if (ReleaseObjectsFile.isErrorDetected())
             {
                 // Сохранить отчет об ошибке
                 if (LogToFile) {
-                    ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile, AppendLogFile);
+                    ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile, AppendLogFile, OnlyError, AlsoLogWarning);
                 }
                 // Установить ERRORLEVEL как ошибка
                 System.exit(-1);

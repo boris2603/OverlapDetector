@@ -321,7 +321,7 @@ class ReleaseObject
     }
 
     // Сгенерировать текст отчета по проверке
-    public String GenerateReportText(InstallFile CheckInstFile, boolean MachineReadyFormat) {
+    public String GenerateReportText(InstallFile CheckInstFile, boolean MachineReadyFormat, boolean OnlyError, boolean AlsoLogWarning) {
 
         // ArrayList<OverlapItem> ZNIDepend = this.OverlapDetector(CheckInstFile);
         String LogFileText =  new String();
@@ -336,25 +336,26 @@ class ReleaseObject
                 } else {
                     for (DepListItem depListItem : item.depListItems) {
                         LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("%s %s,2,%s %s, %s %s %s \n",CheckInstFile.sZNI,CheckInstFile.Developer, depListItem.ZNI, item.Developer,depListItem.Type,depListItem.TBP,depListItem.Object)) :
-                                            LogFileText.concat(String.format("\n  %s %s %s %s \n",depListItem.ZNI,depListItem.Type,depListItem.TBP,depListItem.Object));
+                                            LogFileText.concat(String.format("  %s %s %s %s \n",depListItem.ZNI,depListItem.Type,depListItem.TBP,depListItem.Object));
                     }
                 }
             }
         }
         else
         {
-            LogFileText=LogFileText.concat(String.format("\n %s intersection check passed successfully",CheckInstFile.sZNI));
+            if (!OnlyError) {
+                LogFileText = LogFileText.concat(String.format("\n %s intersection check passed successfully", CheckInstFile.sZNI));
+            };
 
-
-            ArrayList<String> InformZIN=this.GetDependenceZNIList(CheckInstFile);
-            if (!InformZIN.isEmpty())
-            {
-                LogFileText=LogFileText.concat("WARNING!!! Report the changes in RFC: ");
-                for (String item :InformZIN)
-                {
-                    LogFileText=LogFileText.concat(item.concat(" "));
+            if (AlsoLogWarning) {
+                ArrayList<String> InformZIN = this.GetDependenceZNIList(CheckInstFile);
+                if (!InformZIN.isEmpty()) {
+                    LogFileText = LogFileText.concat("WARNING!!! Report the changes in RFC: ");
+                    for (String item : InformZIN) {
+                        LogFileText = LogFileText.concat(item.concat(" "));
+                    }
+                    LogFileText = LogFileText.concat("\n");
                 }
-                LogFileText=LogFileText.concat("\n");
             }
         }
 
@@ -362,15 +363,15 @@ class ReleaseObject
     }
 
     // Записать отчет в файл
-    public void SaveReport(String LogFileName, InstallFile CheckInsFile, boolean AppendLogFile)
+    public void SaveReport(String LogFileName, InstallFile CheckInsFile, boolean AppendLogFile, boolean OnlyError, boolean AlsoLogWarning)
     {
         String ReportText = "";
 
         if (CheckInsFile.HasError())
         {
-            ReportText = String.format("%s,3,%s",CheckInsFile.sZNI,CheckInsFile.getInstallFileMasterPath());
+            ReportText = String.format("%s,3,%s,%s\n",CheckInsFile.sZNI,CheckInsFile.getInstallFileMasterPath(),CheckInsFile.getHasErrorString());
         }
-        else ReportText = this.GenerateReportText(CheckInsFile, true);
+        else ReportText = this.GenerateReportText(CheckInsFile, true, OnlyError, AlsoLogWarning);
 
         try
         {
