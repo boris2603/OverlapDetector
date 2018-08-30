@@ -17,6 +17,7 @@ class ReleaseObject
     private final String FileObjectName = "ODObjectList.txt";
     private final String FileZNIName    = "ODZNIList.txt";
     private final String FileNamePath;
+    private final String LN=System.lineSeparator(); // Перевод строки для разных систем
 
     public boolean isErrorDetected() {
         return ErrorDetected;
@@ -53,11 +54,18 @@ class ReleaseObject
             String[] items = line.split(",");
             if (items.length > 0) {
                 DepZNIListItem Item = new DepZNIListItem(items[0],"");
+                int idxGlobal=1;
+
                 if (items.length > 1) {
-                    Item.Developer = items[1];
+                    Item.Developer = items[idxGlobal];
                 }
 
-                for (int idx = 2; idx < items.length; idx++) {
+                for (int idx = idxGlobal+1; idx < items.length && !items[idx].equals("#"); idx++) {
+                    Item.eMilList.add(items[idx]);
+                    idxGlobal=idx;
+                }
+
+                for (int idx = idxGlobal+2; idx < items.length; idx++) {
                     Item.DependenceList.add(items[idx]);
                 }
                 ReleaseFullDepZNIList.add(Item);
@@ -113,7 +121,13 @@ class ReleaseObject
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
             StringBuilder saveString = new StringBuilder(item.ZNI);
+
             saveString.append(",").append(item.Developer);
+
+            for(String itemEmail : item.eMilList) {
+                saveString.append(",").append(itemEmail);
+            }
+            saveString.append(",#");
 
             for (String itmZNI : item.DependenceList)
             {
@@ -279,6 +293,8 @@ class ReleaseObject
 
         DepZNIListItem AddItem = new DepZNIListItem(ChangeFile.sZNI, ChangeFile.Developer);
         AddItem.DependenceList = ChangeFile.DepZNIList;
+        AddItem.eMilList=ChangeFile.EmailList;
+
 //SAM зачем условие ??
         if (!AddItem.ZNI.isEmpty()) ReleaseFullDepZNIList.add(AddItem);
     }
@@ -328,15 +344,17 @@ class ReleaseObject
 
         if (!ZNIIntersectionList.isEmpty())
         {
-            if (!MachineReadyFormat) LogFileText=LogFileText.concat(String.format("\nNot allowed intersections by RFC %s %s:\n",CheckInstFile.sZNI,CheckInstFile.Developer));
+            if (!MachineReadyFormat)
+                LogFileText = LogFileText.concat(LN+String.format("Not allowed intersections by RFC %s %s:", CheckInstFile.sZNI, CheckInstFile.Developer)+LN);
+
             for (OverlapItem item : ZNIIntersectionList) {
-                if (!MachineReadyFormat) LogFileText=LogFileText.concat(String.format("%s %s",item.mainZNI,item.Developer));
+                if (!MachineReadyFormat) LogFileText=LogFileText.concat(String.format("%s %s",item.mainZNI,item.Developer)+LN);
                 if (item.depListItems.isEmpty()) {
-                    LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("%s %s,1,%s %s\n",CheckInstFile.sZNI,CheckInstFile.Developer,item.mainZNI,item.Developer)) : LogFileText.concat(" not installed \n");
+                    LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("1,%s,%s,%s,%s",CheckInstFile.sZNI,CheckInstFile.Developer,item.mainZNI,item.Developer)+LN) : LogFileText.concat(" not installed"+LN);
                 } else {
                     for (DepListItem depListItem : item.depListItems) {
-                        LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("%s %s,2,%s %s, %s %s %s \n",CheckInstFile.sZNI,CheckInstFile.Developer, depListItem.ZNI, item.Developer,depListItem.Type,depListItem.TBP,depListItem.Object)) :
-                                            LogFileText.concat(String.format("  %s %s %s %s \n",depListItem.ZNI,depListItem.Type,depListItem.TBP,depListItem.Object));
+                        LogFileText= MachineReadyFormat ? LogFileText.concat(String.format("2,%s,%s,%s,%s,%s %s %s",CheckInstFile.sZNI,CheckInstFile.Developer, depListItem.ZNI, item.Developer,depListItem.Type,depListItem.TBP,depListItem.Object)+LN) :
+                                            LogFileText.concat(String.format("  %s %s %s %s ",depListItem.ZNI,depListItem.Type,depListItem.TBP,depListItem.Object)+LN);
                     }
                 }
             }
@@ -344,8 +362,9 @@ class ReleaseObject
         else
         {
             if (!OnlyError) {
-                LogFileText = LogFileText.concat(String.format("\n %s intersection check passed successfully", CheckInstFile.sZNI));
+                LogFileText = LogFileText.concat(LN+String.format("%s intersection check passed successfully", CheckInstFile.sZNI));
             };
+
 
             if (AlsoLogWarning) {
                 ArrayList<String> InformZIN = this.GetDependenceZNIList(CheckInstFile);
@@ -354,7 +373,7 @@ class ReleaseObject
                     for (String item : InformZIN) {
                         LogFileText = LogFileText.concat(item.concat(" "));
                     }
-                    LogFileText = LogFileText.concat("\n");
+                    LogFileText = LogFileText.concat(LN);
                 }
             }
         }
@@ -369,7 +388,7 @@ class ReleaseObject
 
         if (CheckInsFile.HasError())
         {
-            ReportText = String.format("%s,3,%s,%s\n",CheckInsFile.sZNI,CheckInsFile.getInstallFileMasterPath(),CheckInsFile.getHasErrorString());
+            ReportText = String.format("3,%s,%s,%s",CheckInsFile.sZNI,CheckInsFile.getInstallFileMasterPath(),CheckInsFile.getHasErrorString());
         }
         else ReportText = this.GenerateReportText(CheckInsFile, true, OnlyError, AlsoLogWarning);
 

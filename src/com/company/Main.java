@@ -20,7 +20,7 @@ public class Main {
             System.out.println(" -e log only errors");
             System.out.println(" -w log warnings");
             System.out.println(" -l generate machine read log");
-            System.out.println("[machine read log filename] if -l parameter detected, machine read log write in it file, if parameter not set, log write in file 'install directory'.err ");
+            System.out.println("[machine read log filename] if -l parameter detected, machine read log write in  this file, if parameter not set, log write in file OverlapDetector.err in install file directory");
             return;
         }
 
@@ -29,31 +29,31 @@ public class Main {
 
         int NextArgIdx=2;
 
-        boolean OnlyStorage = false;
-        boolean OnlyError = false;
-        boolean AlsoLogWarning = false;
+        boolean flagOnlyStorage = false;
+        boolean flagOnlyError = false;
+        boolean flagAlsoLogWarning = false;
 
-        boolean LogToFile = false;
-        boolean AppendLogFile =false;
+        boolean flagLogToFile = false;
+        boolean flagAppendLogFile =false;
 
         String LogFileName = new String();
 
          while (args.length > NextArgIdx) {
             switch (args[NextArgIdx]) {
                 case "-s":
-                     OnlyStorage=true;
+                     flagOnlyStorage=true;
                      break;
                 case "-e":
-                      OnlyError=true;
+                      flagOnlyError=true;
                       break;
                 case "-w":
-                      AlsoLogWarning=true;
+                      flagAlsoLogWarning=true;
                       break;
                 case "-l":
-                    LogToFile = true;
+                    flagLogToFile = true;
                     if ((NextArgIdx+1) < args.length ) {
                         LogFileName=args[NextArgIdx+1];
-                        AppendLogFile=true;
+                        flagAppendLogFile=true;
                     } else {
                         LogFileName=Paths.get(Paths.get(FILE_NAME).getParent().toString(),"OverlapDetector.err").toString();
                     }
@@ -70,14 +70,14 @@ public class Main {
             System.out.println();
             System.out.println(CheckInstFile.getHasErrorString());
             // Сохранить отчет об ошибке
-            if (LogToFile) {
-                ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,AppendLogFile,OnlyError,AlsoLogWarning);
+            if (flagLogToFile) {
+                ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,flagAppendLogFile,flagOnlyError,flagAlsoLogWarning);
             }
             // Установить ERRORLEVEL как ошибка
             System.exit(-1);
         }
 
-        if (OnlyStorage) {
+        if (flagOnlyStorage) {
             // Обновить объекты PCK
             ReleaseObjectsFile.ChangeReleaseItemList(CheckInstFile);
             // Обновить список ЗНИ
@@ -94,12 +94,13 @@ public class Main {
             ReleaseObjectsFile.OverlapDetector(CheckInstFile);
 
 
-            System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, LogToFile, OnlyError, AlsoLogWarning));
+
+            System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, false, flagOnlyError, flagAlsoLogWarning));
             if (ReleaseObjectsFile.isErrorDetected())
             {
                 // Сохранить отчет об ошибке
-                if (LogToFile) {
-                    ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile, AppendLogFile, OnlyError, AlsoLogWarning);
+                if (flagLogToFile) {
+                    ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile, flagAppendLogFile, flagOnlyError, flagAlsoLogWarning);
                 }
                 // Установить ERRORLEVEL как ошибка
                 System.exit(-1);
