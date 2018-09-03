@@ -365,18 +365,22 @@ class ReleaseObject
                 LogFileText = LogFileText.concat(LN+String.format("%s intersection check passed successfully", CheckInstFile.sZNI));
             };
 
+        };
 
-            if (AlsoLogWarning) {
-                ArrayList<String> InformZIN = this.GetDependenceZNIList(CheckInstFile);
-                if (!InformZIN.isEmpty()) {
-                    LogFileText = LogFileText.concat("WARNING!!! Report the changes in RFC: ");
-                    for (String item : InformZIN) {
-                        LogFileText = LogFileText.concat(item.concat(" "));
-                    }
-                    LogFileText = LogFileText.concat(LN);
+        if (AlsoLogWarning) {
+            ArrayList<String> InformZIN = this.GetDependenceZNIList(CheckInstFile);
+            if (!InformZIN.isEmpty()) {
+                if (!MachineReadyFormat) {
+                    LogFileText = LogFileText.concat(CheckInstFile.sZNI + " " + CheckInstFile.Developer + LN);
+                    LogFileText = LogFileText.concat("   WARNING!!! Report the changes in RFC: ");
+                };
+                for (String item : InformZIN) {
+                    LogFileText = MachineReadyFormat ? LogFileText.concat(String.format("4,%s,%s,%s", CheckInstFile.sZNI, CheckInstFile.Developer, item)+LN) : LogFileText.concat(item.concat(" "));
                 }
+                if (!MachineReadyFormat)
+                    LogFileText = LogFileText.concat(LN);
             }
-        }
+        };
 
     return LogFileText;
     }
