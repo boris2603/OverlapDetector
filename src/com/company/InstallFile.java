@@ -41,7 +41,9 @@ class InstallFile {
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
     private final Pattern pZNI = Pattern.compile("(ЗНИ|RFC)\\W*([0-9]{6})", Pattern.CASE_INSENSITIVE);
-    private final Pattern pEMail = Pattern.compile("[a-zA-Z0-9]+[._a-zA-Z0-9!#$%&'*+-/=?^_`{|}~]*[a-zA-Z]*@[a-zA-Z0-9]{2,8}.[a-zA-Z.]{2,6}");
+    private final Pattern pEMail = Pattern.compile("(\\w+[\\.|-]?\\w+)+@(\\w+[\\.|-]?\\w+)+\\.[.a-zA-Z]{2,8}", Pattern.CASE_INSENSITIVE);
+
+    // (\\w+[\\.-]?\\w+)+@(\\w+[\\.-]?\\w+)+[\\.]{1}[a-z]{2,4}
     // PCK файлы для установки
     private final Pattern pPCKListIndicator = Pattern.compile("Установить", Pattern.CASE_INSENSITIVE);
     private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*[_A-Za-z0-9-]*\\.pck", Pattern.CASE_INSENSITIVE);
@@ -153,7 +155,8 @@ class InstallFile {
             DepZNIList.addAll(GetMatchListByIndicator(line, pDependZNI, pDepListIndicator));
 
             //Получаем список почты
-            EmailList.addAll(GetMatchList(line, pEMail));
+            if (line.contains ("@"))
+                EmailList.addAll(GetMatchList(line, pEMail));
         }
 
     }
