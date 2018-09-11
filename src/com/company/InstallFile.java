@@ -41,7 +41,7 @@ class InstallFile {
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
     private final Pattern pZNI = Pattern.compile("(ЗНИ|RFC)\\W*([0-9]{6})", Pattern.CASE_INSENSITIVE);
-    private final Pattern pEMail = Pattern.compile("(\\w+[\\.|-]?\\w+)+@(\\w+[\\.|-]?\\w+)+\\.[.a-zA-Z]{2,8}", Pattern.CASE_INSENSITIVE);
+    private final Pattern pEMail = Pattern.compile("\\w+(\\w?[\\.|-]*\\w+)+@(\\w+[\\.|-]?\\w+)+\\.[.a-zA-Z]{2,8}", Pattern.CASE_INSENSITIVE);
 
     // (\\w+[\\.-]?\\w+)+@(\\w+[\\.-]?\\w+)+[\\.]{1}[a-z]{2,4}
     // PCK файлы для установки
