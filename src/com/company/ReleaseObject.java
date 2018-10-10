@@ -244,7 +244,7 @@ class ReleaseObject
                 if (makeNewItem)
                 {
                     // Если ЗНИ реализована в одном дистрибутиве то объект учитывать не надо
-                    if (!itemObject.ZNI.equals(CheckInstallFile.sZNI) && !CheckAlsoReleased(itemObject.ZNI,CheckInstallFile)) {
+                    if (!itemObject.ZNI.equals(CheckInstallFile.sZNI) && !CheckAlsoReleased(itemObject.ZNI)) {
                         OverlapItem ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
 
                         ZNIIntersectionItem.depListItems.add(itemObject);
@@ -281,9 +281,19 @@ class ReleaseObject
     {
         boolean retval=false;
         for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
-            if (itemZNI.CheckZNI(CheckZNI)) {
+            if (itemZNI.ZNI.equals(CheckZNI)) {
                 retval = true;
                 break;
+            }
+            else {
+             for (String item : itemZNI.AlsoReleasedList)
+             {
+                 if (item.equals(CheckZNI))
+                 {
+                     retval=true;
+                     break;
+                 }
+             }
             }
         return retval;
     }
@@ -370,16 +380,18 @@ class ReleaseObject
     }
 
     // Проверим что ЗНИ  числиться в реализованных совместно по
-    private boolean CheckAlsoReleased(String CheckedZNI, InstallFile CheckedFile)
+    private boolean CheckAlsoReleased(String CheckedZNI)
     {
         boolean result=false;
-        for ( String item : CheckedFile.AlsoReleasedZNI)
+        for ( DepZNIListItem item : ReleaseFullDepZNIList)
         {
-            if (item.equals(CheckedZNI))
-            {
+             for (String itemZNI : item.AlsoReleasedList)
+             if (itemZNI.equals(CheckedZNI))
+             {
                 result=true;
                 break;
-            }
+             }
+             if (result) break;
         }
         return result;
     }
