@@ -15,10 +15,13 @@ class InstallFile {
 
     // результаты разбора
     public String sZNI ="";
-    public String Developer;
+    public String Developer="";
+    public String Distributive="";
     public ArrayList<DepListItem> FullPCKItemsList = new ArrayList<>();
     public ArrayList<String> DepZNIList= new ArrayList<>();
     public ArrayList<String> EmailList= new ArrayList<>();
+    public ArrayList<String> AlsoReleasedZNI=new ArrayList<>();
+
 
     public String getInstallFileMasterPath() {
         return InstallFileMasterPath;
@@ -40,26 +43,32 @@ class InstallFile {
 
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
-    private final Pattern pZNI = Pattern.compile("(ЗНИ|RFC)\\W*([0-9]{6})", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNIIndicator = Pattern.compile("(ЗНИ|RFC)\\W*([0-9]{6})", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNI = Pattern.compile("([0-9]{6})", Pattern.CASE_INSENSITIVE);
+    // ЗНО/CI/C0/SD и прочая светотень
+    private final Pattern pZNOIndicator = Pattern.compile("(ЗНО|C0|CI|SD|IM|ZNO)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNO = Pattern.compile("[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
+    // UNITY
+    private final Pattern pUnityIndicator = Pattern.compile("(UNITY)(.*|_)[0-9]", Pattern.CASE_INSENSITIVE);
+    private final Pattern pUnity = Pattern.compile("[0-9]{6}", Pattern.CASE_INSENSITIVE);
+
+    // Почта
     private final Pattern pEMail = Pattern.compile("\\w+(\\w?[\\.|-]*\\w+)+@(\\w+[\\.|-]?\\w+)+\\.[.a-zA-Z]{2,8}", Pattern.CASE_INSENSITIVE);
 
-    // (\\w+[\\.-]?\\w+)+@(\\w+[\\.-]?\\w+)+[\\.]{1}[a-z]{2,4}
+    // Так-же реализованные ЗНИ
+    private final Pattern pAlsoReleasedIndicator = Pattern.compile("Так же реализованы ЗНИ", Pattern.CASE_INSENSITIVE);
+
     // PCK файлы для установки
     private final Pattern pPCKListIndicator = Pattern.compile("Установить", Pattern.CASE_INSENSITIVE);
     private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*[_A-Za-z0-9-]*\\.pck", Pattern.CASE_INSENSITIVE);
     // Список ЗНИ зависимостей
-    private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*после", Pattern.CASE_INSENSITIVE);
-    private final Pattern pDependZNI = Pattern.compile("[0-9]{6}");
+    private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*(после|до)", Pattern.CASE_INSENSITIVE);
     // Индикатор что есть Mdb
     private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*[_A-Za-z0-9-]*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Индикатор Разработчик
     private final Pattern pDeveloperSign = Pattern.compile("(Разработчик)(и?)",Pattern.CASE_INSENSITIVE );
     // Разаработчик написано в одной строке
     private final Pattern pDeveloper = Pattern.compile("(Разработчики|Разработчик)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
-    // ЗНО/CI/C0/SD и прочая светотень
-    private final Pattern pZNO = Pattern.compile("(ЗНО|C0|CI|SD|IM|ZNO)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
-    // UNITY
-    private final Pattern pUnity = Pattern.compile("(UNITY)(.*|_)[0-9]{6}", Pattern.CASE_INSENSITIVE);
 
     // Индикатор, что у нас есть ошибки парсинга файлов
     boolean HasError()
@@ -74,11 +83,13 @@ class InstallFile {
 
     InstallFile(String InstallTxtFileName)
     {
-        Developer = "";
+
+        String FileSeparator=(String)System.getProperty("file.separator");
+
         InstallFileMasterPath = Paths.get(InstallTxtFileName).getParent().toString();
+        Distributive=InstallFileMasterPath.substring(InstallFileMasterPath.lastIndexOf(FileSeparator)+1);
 
         InstallFileParce(LoadFile(InstallTxtFileName));
-
         if (sZNI.isEmpty())
         {
             HasErrorString = HasErrorString + " Invalid install.txt format: unresolve ЗНИ parametr" + System.lineSeparator();
@@ -102,14 +113,27 @@ class InstallFile {
             // Получаем номер ЗНИ
             if (sZNI.isEmpty())
             {
-                sZNI = GetMatchParam(line, pZNI,2);
-                if (sZNI.isEmpty())
+                AlsoReleasedZNI.addAll(GetMatchListByIndicator(line, pZNI, pZNIIndicator));
+                if (sZNI.isEmpty() && !AlsoReleasedZNI.isEmpty())
                 {
-                    sZNI = GetMatchParam(line, pZNO,0);
+                    sZNI=AlsoReleasedZNI.get(0);
+                    AlsoReleasedZNI.remove(0);
                 }
                 if (sZNI.isEmpty())
                 {
-                    sZNI = GetMatchParam(line, pUnity,0);
+                    AlsoReleasedZNI.addAll(GetMatchListByIndicator(line, pUnity, pUnityIndicator));
+                    if (!AlsoReleasedZNI.isEmpty()) {
+                        sZNI = AlsoReleasedZNI.get(0);
+                        AlsoReleasedZNI.remove(0);
+                    }
+                }
+                if (sZNI.isEmpty())
+                {
+                    AlsoReleasedZNI.addAll(GetMatchListByIndicator(line, pZNO, pZNOIndicator));
+                    if (!AlsoReleasedZNI.isEmpty()) {
+                        sZNI = AlsoReleasedZNI.get(0);
+                        AlsoReleasedZNI.remove(0);
+                    }
                 }
                 if (!sZNI.isEmpty())
                 {
@@ -152,7 +176,10 @@ class InstallFile {
             mdbList.addAll(GetMatchList(line, pMDB));
 
             //Обрабатываем Установить после
-            DepZNIList.addAll(GetMatchListByIndicator(line, pDependZNI, pDepListIndicator));
+            DepZNIList.addAll(GetMatchListByIndicator(line, pZNI, pDepListIndicator));
+
+            //Обрабатываем Так же реализованы ЗНИ
+            AlsoReleasedZNI.addAll(GetMatchListByIndicator(line, pZNI, pAlsoReleasedIndicator));
 
             //Получаем список почты
             if (line.contains ("@"))
@@ -210,6 +237,28 @@ class InstallFile {
             File file = new File(InstallFileMasterPath, pckFile.replace('\\', File.separatorChar));
             FullPCKItemsList.addAll(LoadPCKFile(file.getPath()));
         }
+
+        // Если есть реализованные совместно ЗНИ размножим объекты
+        if (!AlsoReleasedZNI.isEmpty())
+        {
+            ArrayList<DepListItem> masterPCKItemsList = new ArrayList<DepListItem>();
+            masterPCKItemsList.addAll(FullPCKItemsList);
+
+            for (String ZNIItem  : AlsoReleasedZNI) {
+                masterPCKItemsList.forEach((item) -> {
+                        try {
+                            DepListItem itemPCKListItem = (DepListItem) item.clone();
+                            itemPCKListItem.ZNI = ZNIItem;
+                            if (!ObjectAlreadyInList(itemPCKListItem))
+                                FullPCKItemsList.add(itemPCKListItem);
+                        }
+                       catch (CloneNotSupportedException e)
+                       {
+                           System.out.println("Couldn't clone list due to " + e.getMessage());
+                       }
+                });
+            }
+        }
     }
 
     // Распарсить один из найденных PCK
@@ -227,6 +276,7 @@ class InstallFile {
                     case "TRANS":
                     case "E-METH":
                     case "IDX":
+                    case "ATTR":
                         DepListItem dplItem = new DepListItem();
                         dplItem.ZNI = sZNI;
                         if (items.length==3) {
@@ -289,7 +339,7 @@ class InstallFile {
         {
             for (DepListItem item : FullPCKItemsList) {
                 if (item.Type.equals(checkItem.Type) &&
-                        item.TBP.equals(checkItem.TBP) && item.Object.equals(checkItem.Object))
+                        item.TBP.equals(checkItem.TBP) && item.Object.equals(checkItem.Object) && item.ZNI.equals(checkItem.ZNI))
                 {
                     retVal = true;
                     break;

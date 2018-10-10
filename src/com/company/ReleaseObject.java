@@ -14,6 +14,7 @@ class ReleaseObject
     // Список зависимостей по проверяемой ЗНИ
     private ArrayList<OverlapItem> ZNIIntersectionList = new ArrayList<>();
 
+
     private final String FileObjectName = "ODObjectList.txt";
     private final String FileZNIName    = "ODZNIList.txt";
     private final String FileNamePath;
@@ -25,6 +26,7 @@ class ReleaseObject
 
     private boolean ErrorDetected;
 
+    // Инициализация
     ReleaseObject(String ODFileNamePath)
     {
         FileNamePath=ODFileNamePath;
@@ -36,7 +38,6 @@ class ReleaseObject
 
 
     // Загрузить список ЗНИ по релизу
-    @SuppressWarnings("ManualArrayToCollectionCopy")
     void LoadZNIList()
     {
         List<String> lines = new ArrayList<>();
@@ -53,20 +54,37 @@ class ReleaseObject
         for(String line : lines) {
             String[] items = line.split(",");
             if (items.length > 0) {
-                DepZNIListItem Item = new DepZNIListItem(items[0],"");
+                DepZNIListItem Item = new DepZNIListItem(items[0],"", "");
                 int idxGlobal=1;
 
-                if (items.length > 1) {
+                // Загрузим разаработчика и дистрибутив
+                if (items.length > 2) {
                     Item.Developer = items[idxGlobal];
+                    Item.Distributive = items[idxGlobal+1];
+                    idxGlobal=3;
                 }
 
-                for (int idx = idxGlobal+1; idx < items.length && !items[idx].equals("#"); idx++) {
+                // Загрузим список электронной почты
+                for (int idx = idxGlobal; idx < items.length && !items[idx].equals("#"); idx++) {
                     Item.eMilList.add(items[idx]);
                     idxGlobal=idx;
                 }
+                if ((items.length-idxGlobal)>1 && items[idxGlobal+1].equals("#"))
+                        idxGlobal=idxGlobal+2;
+                else idxGlobal++;
 
-                for (int idx = idxGlobal+2; idx < items.length; idx++) {
+                // Загрузим список зависимых ЗНИ
+                for (int idx = idxGlobal; idx < items.length && !items[idx].equals("%"); idx++) {
                     Item.DependenceList.add(items[idx]);
+                    idxGlobal=idx;
+                }
+                if ((items.length-idxGlobal)>1  && items[idxGlobal+1].equals("%"))
+                        idxGlobal=idxGlobal+2;
+                else idxGlobal++;
+
+                // Загрузим список ЗНИ реализованных совместно
+                for (int idx = idxGlobal; idx < items.length; idx++) {
+                    Item.AlsoReleasedList.add(items[idx]);
                 }
                 ReleaseFullDepZNIList.add(Item);
             }
@@ -101,7 +119,6 @@ class ReleaseObject
     }
 
     //Получить список ЗНИ которые зависят от анализируемой
-
     public ArrayList<String> GetDependenceZNIList(InstallFile CheckInstFile)
     {
         ArrayList<String> retVal = new ArrayList<>();
@@ -120,22 +137,39 @@ class ReleaseObject
 
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
+            // Сохраним номер ЗНИ
             StringBuilder saveString = new StringBuilder(item.ZNI);
 
+            // Сохраним имя разработчика
             saveString.append(",").append(item.Developer);
 
+            // Сохраним название дистрибутива
+            saveString.append(",").append(item.Distributive);
+
+            // Сохраним адреса электронной почты разработчика
             for(String itemEmail : item.eMilList) {
                 saveString.append(",").append(itemEmail);
             }
-            saveString.append(",#");
 
+            // Сохраним список зависимых ЗНИ
+            saveString.append(",#");
             for (String itmZNI : item.DependenceList)
             {
                 if (!itmZNI.isEmpty()) {
                     saveString.append(",").append(itmZNI);
                 }
             }
-            // saveString=item.ZNI+" "+saveString;
+
+            // Сохраним совместно реализованные ЗНИ
+            if (!item.AlsoReleasedList.isEmpty()) {
+                saveString.append(",%");
+                for (String itmZNI : item.AlsoReleasedList) {
+                    if (!itmZNI.isEmpty()) {
+                        saveString.append(",").append(itmZNI);
+                    }
+                }
+            }
+
             ObjectList.add(saveString.toString());
         }
 
@@ -156,7 +190,6 @@ class ReleaseObject
     }
 
     // Выгрузить список объектов и зависимых ЗНИ по релизу
-    @SuppressWarnings("ThrowablePrintedToSystemOut")
     void SaveItemList()
     {
         ArrayList<String> ObjectList = new ArrayList<>();
@@ -198,18 +231,27 @@ class ReleaseObject
             {
                 boolean makeNewItem = true;
 
-                for (OverlapItem item : ZNIIntersectionList) {
-                    if (item.mainZNI.equals(itemObject.ZNI)){
+                for (OverlapItem item : ZNIIntersectionList)
+                {
+                    if (item.mainZNI.equals(itemObject.ZNI))
+                    {
                         item.depListItems.add(itemObject);
                         makeNewItem = false;
                     }
                 }
 
-                if (makeNewItem){
-                    OverlapItem  ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
-                    ZNIIntersectionItem.depListItems.add(itemObject);
-                    ZNIIntersectionList.add(ZNIIntersectionItem);
+                // Зависимости не учтены
+                if (makeNewItem)
+                {
+                    // Если ЗНИ реализована в одном дистрибутиве то объект учитывать не надо
+                    if (!itemObject.ZNI.equals(CheckInstallFile.sZNI) && !CheckAlsoReleased(itemObject.ZNI,CheckInstallFile)) {
+                        OverlapItem ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
+
+                        ZNIIntersectionItem.depListItems.add(itemObject);
+                        ZNIIntersectionList.add(ZNIIntersectionItem);
+                    }
                 }
+
             }
         }
 
@@ -232,8 +274,6 @@ class ReleaseObject
         }
         // Проверим что есть ошибки
         ErrorDetected=!ZNIIntersectionList.isEmpty();
-
-        // return ZNIIntersectionList;
     }
 
     // Проверим что ЗНИ устанавливалось на стенд
@@ -241,12 +281,13 @@ class ReleaseObject
     {
         boolean retval=false;
         for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
-            if (itemZNI.ZNI.equals(CheckZNI)) {
+            if (itemZNI.CheckZNI(CheckZNI)) {
                 retval = true;
                 break;
             }
         return retval;
     }
+
 
     // Если по ЗНИ учтены зависимости = true
     private boolean CheckInterseptZNI(InstallFile ChangeFileZNI, String DependZNI){
@@ -276,13 +317,14 @@ class ReleaseObject
                 }
             }
         }
+
         return retval;
     }
 
     // Заменить список ЗНИ в релизе
     void ChangeReleaseZNIList(InstallFile ChangeFile)
     {
-        DepZNIListItem RemoveItem = new DepZNIListItem("","");
+        DepZNIListItem RemoveItem = new DepZNIListItem("","", "");
 
         for(DepZNIListItem item : ReleaseFullDepZNIList)
             if (item.ZNI.equals(ChangeFile.sZNI)) {
@@ -291,9 +333,10 @@ class ReleaseObject
             }
         if (!RemoveItem.ZNI.isEmpty()) ReleaseFullDepZNIList.remove(RemoveItem);
 
-        DepZNIListItem AddItem = new DepZNIListItem(ChangeFile.sZNI, ChangeFile.Developer);
+        DepZNIListItem AddItem = new DepZNIListItem(ChangeFile.sZNI, ChangeFile.Developer, ChangeFile.Distributive);
         AddItem.DependenceList = ChangeFile.DepZNIList;
         AddItem.eMilList=ChangeFile.EmailList;
+        AddItem.AlsoReleasedList=ChangeFile.AlsoReleasedZNI;
 
 //SAM зачем условие ??
         if (!AddItem.ZNI.isEmpty()) ReleaseFullDepZNIList.add(AddItem);
@@ -325,6 +368,22 @@ class ReleaseObject
         }
         return OverlapItems;
     }
+
+    // Проверим что ЗНИ  числиться в реализованных совместно по
+    private boolean CheckAlsoReleased(String CheckedZNI, InstallFile CheckedFile)
+    {
+        boolean result=false;
+        for ( String item : CheckedFile.AlsoReleasedZNI)
+        {
+            if (item.equals(CheckedZNI))
+            {
+                result=true;
+                break;
+            }
+        }
+        return result;
+    }
+
 
     // Найти такие же изменяемые объекты в других ЗНИ из состава основного релиза
     private ArrayList<DepListItem> FindObjects(DepListItem checkItem)
