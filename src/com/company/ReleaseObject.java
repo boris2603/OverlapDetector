@@ -244,7 +244,8 @@ class ReleaseObject
                 if (makeNewItem)
                 {
                     // Если ЗНИ реализована в одном дистрибутиве то объект учитывать не надо
-                    if (!itemObject.ZNI.equals(CheckInstallFile.sZNI) && !CheckAlsoReleased(itemObject.ZNI)) {
+                    if (!itemObject.ZNI.equals(CheckInstallFile.sZNI) && !CheckAlsoReleased(itemObject.ZNI))
+                    {
                         OverlapItem ZNIIntersectionItem = new OverlapItem(itemObject.ZNI);
 
                         ZNIIntersectionItem.depListItems.add(itemObject);
@@ -280,20 +281,21 @@ class ReleaseObject
     private boolean AlreadyInstallZNI(String CheckZNI)
     {
         boolean retval=false;
+
         for (DepZNIListItem itemZNI : ReleaseFullDepZNIList)
             if (itemZNI.ZNI.equals(CheckZNI)) {
                 retval = true;
                 break;
             }
-            else {
-             for (String item : itemZNI.AlsoReleasedList)
-             {
-                 if (item.equals(CheckZNI))
-                 {
-                     retval=true;
-                     break;
-                 }
-             }
+           else {
+                if (!itemZNI.AlsoReleasedList.isEmpty()) {
+                    for (String item : itemZNI.AlsoReleasedList) {
+                        if (item.equals(CheckZNI)) {
+                           retval = true;
+                            break;
+                        }
+                    }
+                }
             }
         return retval;
     }
@@ -403,7 +405,8 @@ class ReleaseObject
         ArrayList<DepListItem> OverlapItems = new ArrayList<>();
 
         for(DepListItem Item: ReleaseFullItemsList)
-            if (Item.DepObjectsCheck(checkItem) && !Item.ZNI.equals(checkItem.ZNI)) OverlapItems.add(Item);
+            if (Item.DepObjectsCheck(checkItem))
+                        OverlapItems.add(Item);
         return OverlapItems;
     }
 
