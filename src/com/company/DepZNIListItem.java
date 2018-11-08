@@ -27,27 +27,20 @@ class DepZNIListItem {
 
         // Проверим что ЗНИ есть в списке зависимых ЗНИ
         if (!DependenceList.isEmpty())
-            for (int i = 0; i < DependenceList.size(); i++) {
-            String item = DependenceList.get(i);
-            if (item.equals(TestZNI)) {
+            for (String DepItem : DependenceList)
+                if (DepItem.equals(TestZNI)) {
                 retval = true;
                 break;
             }
-        }
 
         // Проверим что ЗНИ есть в списке реализованных в одном дистрибутиве
         if (!retval  && !AlsoReleasedList.isEmpty())
-        {
             for (String item : AlsoReleasedList)
-            {
                 if (item.equals(TestZNI))
                 {
                     retval=true;
                     break;
                 }
-            }
-
-        }
 
         return retval;
     }

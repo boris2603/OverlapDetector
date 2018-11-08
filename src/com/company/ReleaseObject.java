@@ -52,41 +52,44 @@ class ReleaseObject
         ReleaseFullDepZNIList.clear();
 
         for(String line : lines) {
-            String[] items = line.split(",");
-            if (items.length > 0) {
-                DepZNIListItem Item = new DepZNIListItem(items[0],"", "");
-                int idxGlobal=1;
+            if (line.charAt(0)!='#')
+            {
+                String[] items = line.split(",");
+                if (items.length > 0) {
+                    DepZNIListItem Item = new DepZNIListItem(items[0], "", "");
+                    int idxGlobal = 1;
 
-                // Загрузим разаработчика и дистрибутив
-                if (items.length > 2) {
-                    Item.Developer = items[idxGlobal];
-                    Item.Distributive = items[idxGlobal+1];
-                    idxGlobal=3;
-                }
+                    // Загрузим разаработчика и дистрибутив
+                    if (items.length > 2) {
+                        Item.Developer = items[idxGlobal];
+                        Item.Distributive = items[idxGlobal + 1];
+                        idxGlobal = 3;
+                    }
 
-                // Загрузим список электронной почты
-                for (int idx = idxGlobal; idx < items.length && !items[idx].equals("#"); idx++) {
-                    Item.eMilList.add(items[idx]);
-                    idxGlobal=idx;
-                }
-                if ((items.length-idxGlobal)>1 && items[idxGlobal+1].equals("#"))
-                        idxGlobal=idxGlobal+2;
-                else idxGlobal++;
+                    // Загрузим список электронной почты
+                    for (int idx = idxGlobal; idx < items.length && !items[idx].equals("#"); idx++) {
+                        Item.eMilList.add(items[idx]);
+                        idxGlobal = idx;
+                    }
+                    if ((items.length - idxGlobal) > 1 && items[idxGlobal + 1].equals("#"))
+                        idxGlobal = idxGlobal + 2;
+                    else idxGlobal++;
 
-                // Загрузим список зависимых ЗНИ
-                for (int idx = idxGlobal; idx < items.length && !items[idx].equals("%"); idx++) {
-                    Item.DependenceList.add(items[idx]);
-                    idxGlobal=idx;
-                }
-                if ((items.length-idxGlobal)>1  && items[idxGlobal+1].equals("%"))
-                        idxGlobal=idxGlobal+2;
-                else idxGlobal++;
+                    // Загрузим список зависимых ЗНИ
+                    for (int idx = idxGlobal; idx < items.length && !items[idx].equals("%"); idx++) {
+                        Item.DependenceList.add(items[idx]);
+                        idxGlobal = idx;
+                    }
+                    if ((items.length - idxGlobal) > 1 && items[idxGlobal + 1].equals("%"))
+                        idxGlobal = idxGlobal + 2;
+                    else idxGlobal++;
 
-                // Загрузим список ЗНИ реализованных совместно
-                for (int idx = idxGlobal; idx < items.length; idx++) {
-                    Item.AlsoReleasedList.add(items[idx]);
+                    // Загрузим список ЗНИ реализованных совместно
+                    for (int idx = idxGlobal; idx < items.length; idx++) {
+                        Item.AlsoReleasedList.add(items[idx]);
+                    }
+                    ReleaseFullDepZNIList.add(Item);
                 }
-                ReleaseFullDepZNIList.add(Item);
             }
         }
     }
@@ -106,15 +109,18 @@ class ReleaseObject
         ReleaseFullItemsList.clear();
 
         for(String line : lines) {
-            String[] items = line.split(" ");
-            DepListItem Item = new DepListItem();
+            if (line.charAt(0)!='#')
+            {
+                String[] items = line.split(" ");
+                DepListItem Item = new DepListItem();
 
-            Item.ZNI = items[0];
-            Item.Type = items[1];
-            Item.TBP = items[2];
-            Item.Object = items[3];
+                Item.ZNI = items[0];
+                Item.Type = items[1];
+                Item.TBP = items[2];
+                Item.Object = items[3];
 
-            ReleaseFullItemsList.add(Item);
+                ReleaseFullItemsList.add(Item);
+            }
         }
     }
 
@@ -134,6 +140,11 @@ class ReleaseObject
     void SaveZNIList()
     {
         ArrayList<String> ObjectList = new ArrayList<>();
+
+        ObjectList.add("# Формат файла");
+        ObjectList.add("#");
+        ObjectList.add("# <ЗНИ>,<Разработчик>,<Дистрибутив>,<Почта разработчика>,#,<список ЗНИ, от которых зависит установка>,%,<список ЗНИ которые реализуются вместе с основной (единый дистрибутив)>");
+        ObjectList.add("#");
 
         for(DepZNIListItem item : ReleaseFullDepZNIList)
         {
@@ -193,6 +204,18 @@ class ReleaseObject
     void SaveItemList()
     {
         ArrayList<String> ObjectList = new ArrayList<>();
+
+
+        ObjectList.add("# Формат файла следующий:");
+        ObjectList.add("#");
+        ObjectList.add("# <Номер ЗНИ> <Тип объекта> <ТБП объекта> <Имя объекта>");
+        ObjectList.add("#");
+        ObjectList.add("# Типы объектов:");
+        ObjectList.add("#     METH – операция, возможно с изменением экранной формы");
+        ObjectList.add("#     ATTR –  реквизит");
+        ObjectList.add("#     CRIT – представление");
+        ObjectList.add("#     IDX -  индекс");
+        ObjectList.add("#");
 
         for(DepListItem item : ReleaseFullItemsList)
             if (!item.ZNI.isEmpty()) ObjectList.add(item.ZNI + " " + item.Type + " " + item.TBP + " " + item.Object);

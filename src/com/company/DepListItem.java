@@ -8,7 +8,10 @@ class DepListItem implements Cloneable{
 
     // Проверяем что объекты идентичны не учитывая номер ЗНИ
     boolean DepObjectsCheck(DepListItem checkItem) {
-        return checkItem != null && (this.Type.equals(checkItem.Type) && this.TBP.equals(checkItem.TBP) && this.Object.equals(checkItem.Object));
+        if (checkItem == null || checkItem.ZNI.equals(this.ZNI))
+            return false;
+        else
+            return (this.Type.equals(checkItem.Type) && this.TBP.equals(checkItem.TBP) && this.Object.equals(checkItem.Object));
     }
 
     // Метод клонирования объекта
