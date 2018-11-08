@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.UnmappableCharacterException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -311,10 +312,10 @@ class InstallFile {
         else
             {
                 try {
-                    lines = Files.readAllLines(Paths.get(FileName), Charset.forName("windows-1251"));
-                    } catch (UnmappableCharacterException UECEx) {
+                    lines = Files.readAllLines(Paths.get(FileName), Charset.forName("UTF-8"));
+                    } catch (UnmappableCharacterException | MalformedInputException UECEx) {
                             try {
-                            lines = Files.readAllLines(Paths.get(FileName),Charset.forName("UTF-8"));
+                            lines = Files.readAllLines(Paths.get(FileName),Charset.forName("windows-1251"));
                             } catch (Exception e) {
                             System.out.println("IO Error reading file " + FileName);
                             System.out.println(e.getMessage());
