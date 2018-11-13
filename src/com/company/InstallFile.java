@@ -44,8 +44,8 @@ class InstallFile {
 
     // Список паттернов для разбора файла Install.txt
     // ЗНИ и почта разработки
-    private final Pattern pZNIIndicator = Pattern.compile("(ЗНИ|RFC|ZNI_|RFC#)(\\W|\\t)*([0-9]{6})", Pattern.CASE_INSENSITIVE);
-    private final Pattern pZNI = Pattern.compile("([0-9]{6})", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNIIndicator = Pattern.compile("(ЗНИ|RFC|ZNI_|RFC#|JIRA)(\\W)*(([0-9]{6})|([A-Za-z0-9]+-([0-9]+)))", Pattern.CASE_INSENSITIVE);
+    private final Pattern pZNI = Pattern.compile("(([0-9]{6})|([A-Za-z0-9]+-([0-9]+)))", Pattern.CASE_INSENSITIVE);
     // ЗНО/CI/C0/SD и прочая светотень
     private final Pattern pZNOIndicator = Pattern.compile("(ЗНО|C0|CI|SD|IM|ZNO)\\W*[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
     private final Pattern pZNO = Pattern.compile("[0-9]{6,8}", Pattern.CASE_INSENSITIVE);
