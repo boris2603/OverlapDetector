@@ -63,7 +63,7 @@ class InstallFile {
     private final Pattern pPCKListIndicator = Pattern.compile("(Установить|Устанавливаем)", Pattern.CASE_INSENSITIVE);
     private final Pattern pPCK = Pattern.compile("([\\w-]+\\\\)*((ЗНО|C0|CI|SD|IM))*[_A-Za-z0-9-]*\\.pck", Pattern.CASE_INSENSITIVE);
     // Список ЗНИ зависимостей
-    private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*(после|до)", Pattern.CASE_INSENSITIVE);
+    private final Pattern pDepListIndicator = Pattern.compile("(Установка|Установить|Ставить|Устанавливать)\\s*(после)", Pattern.CASE_INSENSITIVE);
     // Индикатор что есть Mdb
     private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*[_A-Za-z0-9-]*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Индикатор Разработчик

@@ -20,7 +20,7 @@ public class Main {
             System.out.println(" -e log only errors");
             System.out.println(" -w log warnings");
             System.out.println(" -l generate machine read log");
-            System.out.println("[machine read log filename] if -l parameter detected, machine read log write in  this file, if parameter not set, log write in file OverlapDetector.err in install file directory");
+            System.out.println("[machine read log filename] if -l parameter detected, machine read log write in  this file, if parameter not set, log write in file OverlapDetector.err in install.txt file directory");
             return;
         }
 
@@ -65,7 +65,7 @@ public class Main {
         ReleaseObject ReleaseObjectsFile = new ReleaseObject(STORAGE_PATH);
 
         InstallFile CheckInstFile = new InstallFile(FILE_NAME); //  парсим входной install.txt
-        if (CheckInstFile.HasError())
+        if (CheckInstFile.HasError() && !flagOnlyStorage)
         {
             System.out.println();
             System.out.println(CheckInstFile.getHasErrorString());
