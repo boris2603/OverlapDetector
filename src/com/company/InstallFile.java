@@ -86,9 +86,21 @@ class InstallFile {
     {
 
         String FileSeparator=(String)System.getProperty("file.separator");
+        String MasterPath="";
 
-        InstallFileMasterPath = Paths.get(InstallTxtFileName).getParent().toString();
-        Distributive=InstallFileMasterPath.substring(InstallFileMasterPath.lastIndexOf(FileSeparator)+1);
+        InstallFileMasterPath=Paths.get(InstallTxtFileName).getParent().toString();
+        if (InstallFileMasterPath.lastIndexOf("CI0")<0)
+        {
+
+            HasErrorString = HasErrorString + " Distributive is not passed to Nexus " + System.lineSeparator();
+            return;
+        }
+        else {
+            Distributive = InstallFileMasterPath.substring(InstallFileMasterPath.indexOf("CI0"));
+            if (Distributive.indexOf(FileSeparator)>0) {
+                Distributive = Distributive.substring(0, (Distributive.indexOf(FileSeparator) - 1));
+            }
+        }
 
         InstallFileParce(LoadFile(InstallTxtFileName));
         if (sZNI.isEmpty())

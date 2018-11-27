@@ -65,7 +65,7 @@ public class Main {
         ReleaseObject ReleaseObjectsFile = new ReleaseObject(STORAGE_PATH);
 
         InstallFile CheckInstFile = new InstallFile(FILE_NAME); //  парсим входной install.txt
-        if (CheckInstFile.HasError() && !flagOnlyStorage)
+        if (CheckInstFile.HasError())
         {
             System.out.println();
             System.out.println(CheckInstFile.getHasErrorString());
@@ -73,8 +73,10 @@ public class Main {
             if (flagLogToFile) {
                 ReleaseObjectsFile.SaveReport(LogFileName, CheckInstFile,flagAppendLogFile,flagOnlyError,flagAlsoLogWarning);
             }
-            // Установить ERRORLEVEL как ошибка
-            System.exit(-1);
+            if (!flagOnlyStorage) {
+                // Установить ERRORLEVEL как ошибка
+                System.exit(-1);
+            }
         }
 
         if (flagOnlyStorage) {
@@ -92,8 +94,6 @@ public class Main {
         else
         {
             ReleaseObjectsFile.OverlapDetector(CheckInstFile);
-
-
 
             System.out.println(ReleaseObjectsFile.GenerateReportText(CheckInstFile, false, flagOnlyError, flagAlsoLogWarning));
             if (ReleaseObjectsFile.isErrorDetected())
