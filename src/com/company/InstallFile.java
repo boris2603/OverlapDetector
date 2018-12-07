@@ -98,7 +98,7 @@ class InstallFile {
         else {
             Distributive = InstallFileMasterPath.substring(InstallFileMasterPath.indexOf("CI0"));
             if (Distributive.indexOf(FileSeparator)>0) {
-                Distributive = Distributive.substring(0, (Distributive.indexOf(FileSeparator) - 1));
+                Distributive = Distributive.substring(0, (Distributive.indexOf(FileSeparator)));
             }
         }
 
