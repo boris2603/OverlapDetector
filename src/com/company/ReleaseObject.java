@@ -24,6 +24,21 @@ class ReleaseObject
         return ErrorDetected;
     }
 
+    private boolean AlreadyInIntersection(String ZNI)
+    {
+        boolean retVal=false;
+
+        for (OverlapItem Item : ZNIIntersectionList)
+        {
+            if (Item.mainZNI.equals(ZNI))
+            {
+                retVal=true;
+                break;
+            }
+        }
+        return retVal;
+    }
+
     private boolean ErrorDetected;
 
     // Инициализация
@@ -258,7 +273,7 @@ class ReleaseObject
                 {
                     if (item.mainZNI.equals(itemObject.ZNI))
                     {
-                        item.depListItems.add(itemObject);
+                        if (!item.depListItems.contains(itemObject)) item.depListItems.add(itemObject);
                         makeNewItem = false;
                     }
                 }

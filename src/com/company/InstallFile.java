@@ -67,9 +67,9 @@ class InstallFile {
     // Индикатор что есть Mdb
     private final Pattern pMDB = Pattern.compile("([\\w-]+\\\\)*[_A-Za-z0-9-]*\\.mdb", Pattern.CASE_INSENSITIVE);
     // Индикатор Разработчик
-    private final Pattern pDeveloperSign = Pattern.compile("(Разработчик)(и?)",Pattern.CASE_INSENSITIVE );
+    private final Pattern pDeveloperSign = Pattern.compile("(((Разработчик)(и?))|((Ответственны)(й|е)))",Pattern.CASE_INSENSITIVE );
     // Разаработчик написано в одной строке
-    private final Pattern pDeveloper = Pattern.compile("(Разработчики|Разработчик)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
+    private final Pattern pDeveloper = Pattern.compile("(Разработчики|Разработчик|Ответственный|Ответственные)\\s*:*\\s*(.{1,})",Pattern.CASE_INSENSITIVE );
 
     // Индикатор, что у нас есть ошибки парсинга файлов
     boolean HasError()
